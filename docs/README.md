@@ -2,24 +2,24 @@
 
 Automated macOS/Linux setup with modular zsh configuration, developer tools, and encrypted secrets management.
 
-## Quick Install
+## Quick Install (New Machine)
+
+**Step 1:** Save your `age-key.txt` from password manager to `~/age-key.txt` on the new machine.
+
+**Step 2:** Run this:
 
 ```bash
-# Clone via HTTPS (no SSH keys needed yet)
-git clone https://github.com/plimanowka/dotfiles.git ~/.dotfiles
-
-# Run install
-~/.dotfiles/install.sh
-
-# Copy age-key.txt from password manager to ~/.dotfiles/secrets/
-
-# Decrypt secrets (SSH keys, AWS creds, etc.)
-~/.dotfiles/secrets/secrets-manager.sh export
-
-# Switch to SSH remote (now that SSH keys are restored)
-cd ~/.dotfiles
-git remote set-url origin git@github.com:plimanowka/dotfiles.git
+git clone https://github.com/plimanowka/dotfiles.git ~/.dotfiles && ~/.dotfiles/install.sh && mkdir -p ~/.dotfiles/secrets && mv ~/age-key.txt ~/.dotfiles/secrets/ && ~/.dotfiles/secrets/secrets-manager.sh export && cd ~/.dotfiles && git remote set-url origin git@github.com:plimanowka/dotfiles.git
 ```
+
+That's it! This will:
+1. Clone the repo via HTTPS (no SSH needed)
+2. Install all packages (brew/apt), zsh config, tools
+3. Move your age key to the secrets directory
+4. Decrypt all secrets (SSH keys, AWS/GCP creds, API tokens)
+5. Switch git remote to SSH (now that keys are restored)
+
+---
 
 ## What's Included
 
