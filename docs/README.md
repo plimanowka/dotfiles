@@ -5,8 +5,20 @@ Automated macOS/Linux setup with modular zsh configuration, developer tools, and
 ## Quick Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/dotfiles.git ~/.dotfiles
+# Clone via HTTPS (no SSH keys needed yet)
+git clone https://github.com/plimanowka/dotfiles.git ~/.dotfiles
+
+# Run install
 ~/.dotfiles/install.sh
+
+# Copy age-key.txt from password manager to ~/.dotfiles/secrets/
+
+# Decrypt secrets (SSH keys, AWS creds, etc.)
+~/.dotfiles/secrets/secrets-manager.sh export
+
+# Switch to SSH remote (now that SSH keys are restored)
+cd ~/.dotfiles
+git remote set-url origin git@github.com:plimanowka/dotfiles.git
 ```
 
 ## What's Included
