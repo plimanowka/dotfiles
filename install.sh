@@ -125,6 +125,19 @@ else
             pip3 install --user thefuck || warn "thefuck installation failed"
         fi
 
+        # Install GitHub CLI
+        if ! command -v gh &>/dev/null; then
+            info "Installing GitHub CLI..."
+            (
+                curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+                sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+                echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+                sudo apt-get update
+                sudo apt-get install -y gh
+            )
+            success "GitHub CLI installed"
+        fi
+
         success "Linux packages installed"
         ZSH_HIGHLIGHT_PATH="/usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
