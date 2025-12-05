@@ -219,7 +219,7 @@ source ~/.config/shell/gcloud.sh
 source ~/.config/shell/completions.sh
 
 # Tool configs and helper functions (after compinit, so compdef works)
-source ~/.config/shell/kubernetes.sh
+source ~/.config/shell/kubernetes/init.sh
 source ~/.config/shell/showimg.sh
 source ~/.config/shell/show.sh
 

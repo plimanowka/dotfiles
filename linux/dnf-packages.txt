@@ -10,6 +10,7 @@ jq
 tree
 htop
 fzf
+parallel
 bat
 ripgrep
 zsh-syntax-highlighting

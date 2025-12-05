@@ -76,7 +76,15 @@ See `SECRETS.md` for details.
 │   ├── aliases.sh      # Shell aliases
 │   ├── completions.sh  # Zsh completions setup
 │   ├── gcloud.sh       # Google Cloud SDK
-│   ├── kubernetes.sh   # kubectl, krew, kpops, k8ctx
+│   ├── kubernetes/     # Kubernetes tools (see K8S-TOOLS.md)
+│   │   ├── init.sh     # Loader script
+│   │   ├── k8ctx.sh    # List contexts
+│   │   ├── k8dcs.sh    # DC/context mappings
+│   │   ├── k8deps.sh   # List deployments across clusters
+│   │   ├── k8images.sh # List images across clusters
+│   │   ├── k8logs.sh   # Collect logs across clusters
+│   │   ├── k8pods.sh   # List pods across clusters
+│   │   └── k8pops.sh   # Run kubectl across POPs
 │   ├── sdkman.sh       # SDKMAN setup
 │   ├── secrets.sh      # API keys (gitignored)
 │   ├── show.sh         # Universal file viewer
@@ -98,6 +106,7 @@ See `SECRETS.md` for details.
 ├── docs/               # Documentation
 │   ├── README.md       # This file
 │   ├── EDIT.md         # micro editor cheat sheet
+│   ├── K8S-TOOLS.md    # Kubernetes tools reference
 │   ├── SECRETS.md      # Secrets management guide
 │   └── HOW-I-DID-THIS.md
 ├── install.sh          # Main setup script (macOS + Linux)
@@ -106,18 +115,20 @@ See `SECRETS.md` for details.
 
 ## Custom Commands
 
-### kpops
-Run kubectl across all `pop-*` contexts:
-```bash
-kpops get pods
-kpops --help
-```
+### Kubernetes Tools
 
-### k8ctx
-List Kubernetes contexts:
+See `K8S-TOOLS.md` for detailed documentation.
+
 ```bash
-k8ctx
-k8ctx | grep prod
+k8pops get pods             # Run kubectl across all POPs
+k8ctx                       # List kubectl contexts
+k8pods dsp-api              # List pods across all clusters
+k8deps dsp-api              # List deployments across all clusters
+k8images ads-dsp-api        # List Docker images across clusters
+k8logs -A ads-dsp-api       # Collect logs from all POPs to files
+k8dcs                       # List POP context names
+k8ctx-from eu-west1         # Convert DC name to context
+k8dc-from pop-001-ew1       # Convert context to DC name
 ```
 
 ### show

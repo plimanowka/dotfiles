@@ -10,6 +10,7 @@ jq
 tree
 htop
 fzf
+parallel
 zsh-syntax-highlighting
 unzip
 zip
