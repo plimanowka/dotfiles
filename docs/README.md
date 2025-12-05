@@ -6,18 +6,24 @@ Automated macOS/Linux setup with modular zsh configuration, developer tools, and
 
 **Step 1:** Save your `age-key.txt` from password manager to `~/age-key.txt` on the new machine.
 
-**Step 2:** Run this:
+**Step 2:** Run this (no git required - uses curl):
 
 ```bash
-git clone https://github.com/plimanowka/dotfiles.git ~/.dotfiles && ~/.dotfiles/install.sh && mkdir -p ~/.dotfiles/secrets && mv ~/age-key.txt ~/.dotfiles/secrets/ && ~/.dotfiles/secrets/secrets-manager.sh export && cd ~/.dotfiles && git remote set-url origin git@github.com:plimanowka/dotfiles.git
+curl -fsSL https://github.com/plimanowka/dotfiles/archive/refs/heads/main.tar.gz | tar -xz -C ~ && mv ~/dotfiles-main ~/.dotfiles && ~/.dotfiles/install.sh && mkdir -p ~/.dotfiles/secrets && mv ~/age-key.txt ~/.dotfiles/secrets/ && ~/.dotfiles/secrets/secrets-manager.sh export
+```
+
+**Step 3:** Initialize git repo (after install completes):
+
+```bash
+cd ~/.dotfiles && rm -rf .git && git init && git remote add origin git@github.com:plimanowka/dotfiles.git && git fetch && git reset --hard origin/main
 ```
 
 That's it! This will:
-1. Clone the repo via HTTPS (no SSH needed)
+1. Download and extract repo via curl (no git needed)
 2. Install all packages (brew/apt), zsh config, tools
 3. Move your age key to the secrets directory
 4. Decrypt all secrets (SSH keys, AWS/GCP creds, API tokens)
-5. Switch git remote to SSH (now that keys are restored)
+5. Re-initialize git with SSH remote (now that keys are restored)
 
 ---
 
