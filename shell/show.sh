@@ -70,17 +70,17 @@ EOF
   if [[ -z "$file" || "$file" == "-" ]]; then
     if [[ -z "$ext" ]]; then
       # No type specified, use bat with auto-detect
-      bat --style=plain
+      bat --paging=auto --style=plain
     else
       case "$ext" in
         md|markdown)
-          glow -
+          glow -p -
           ;;
         jpg|jpeg|png|gif|bmp|tiff|webp|svg|image)
           imgcat
           ;;
         *)
-          bat --style=plain -l "$ext"
+          bat --paging=auto --style=plain -l "$ext"
           ;;
       esac
     fi
@@ -96,7 +96,7 @@ EOF
   # Render based on extension
   case "$ext" in
     md|markdown)
-      glow "$file"
+      glow -p "$file"
       ;;
     pdf)
       _show_pdf "$file" "$pdf_pages"
@@ -108,7 +108,7 @@ EOF
       rsvg-convert "$file" | imgcat
       ;;
     *)
-      bat --style=plain "$file"
+      bat --paging=auto --style=plain "$file"
       ;;
   esac
 }
