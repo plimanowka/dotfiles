@@ -13,6 +13,7 @@ fzf
 zsh-syntax-highlighting
 unzip
 zip
+p7zip-full
 
 # Python
 python3
