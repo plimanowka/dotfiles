@@ -1,0 +1,128 @@
+# Starship prompt configuration
+# Docs: https://starship.rs/config/
+
+# Prompt format
+format = """
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_status\
+$kubernetes\
+$python\
+$java\
+$nodejs\
+$golang\
+$rust\
+$docker_context\
+$cmd_duration\
+$line_break\
+$character"""
+
+# Newline between prompts
+add_newline = true
+
+# Directory
+[directory]
+style = "bold cyan"
+truncation_length = 4
+truncate_to_repo = true
+format = "[$path]($style)[$read_only]($read_only_style) "
+read_only = " 🔒"
+
+# Git branch
+[git_branch]
+symbol = " "
+style = "bold purple"
+format = "[$symbol$branch(:$remote_branch)]($style) "
+
+# Git status
+[git_status]
+style = "bold red"
+format = '([$all_status$ahead_behind]($style) )'
+conflicted = "⚔️ "
+ahead = "⇡${count} "
+behind = "⇣${count} "
+diverged = "⇕⇡${ahead_count}⇣${behind_count} "
+untracked = "?${count} "
+stashed = "📦 "
+modified = "!${count} "
+staged = "+${count} "
+renamed = "»${count} "
+deleted = "✘${count} "
+
+# Kubernetes
+[kubernetes]
+disabled = false
+symbol = "☸ "
+style = "bold blue"
+format = '[$symbol$context( \($namespace\))]($style) '
+
+# Command duration (show if > 2s)
+[cmd_duration]
+min_time = 2000
+style = "bold yellow"
+format = "[$duration]($style) "
+
+# Prompt character
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold green)"
+
+# Username (only show if SSH or root)
+[username]
+style_user = "bold yellow"
+style_root = "bold red"
+format = "[$user]($style)@"
+show_always = false
+
+# Hostname (only show if SSH)
+[hostname]
+ssh_only = true
+style = "bold green"
+format = "[$hostname]($style):"
+
+# Python
+[python]
+symbol = " "
+style = "bold yellow"
+format = '[$symbol$version( \($virtualenv\))]($style) '
+
+# Java
+[java]
+symbol = " "
+style = "bold red"
+format = "[$symbol$version]($style) "
+
+# Node.js
+[nodejs]
+symbol = " "
+style = "bold green"
+format = "[$symbol$version]($style) "
+
+# Go
+[golang]
+symbol = " "
+style = "bold cyan"
+format = "[$symbol$version]($style) "
+
+# Rust
+[rust]
+symbol = "🦀 "
+style = "bold orange"
+format = "[$symbol$version]($style) "
+
+# Docker
+[docker_context]
+symbol = " "
+style = "bold blue"
+format = "[$symbol$context]($style) "
+only_with_files = true
+
+# Time (disabled by default, uncomment to enable)
+# [time]
+# disabled = false
+# style = "bold dimmed white"
+# format = "[$time]($style) "
+# time_format = "%H:%M"

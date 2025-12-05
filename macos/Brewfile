@@ -1,0 +1,77 @@
+# Homebrew Bundle - macOS packages
+# Install with: brew bundle --file=~/.dotfiles/macos/Brewfile
+
+# Taps
+tap "homebrew/bundle"
+tap "ringohub/redis-cli"
+
+# ============================================
+# CLI Tools - Core
+# ============================================
+brew "awscli"                   # AWS command line interface
+brew "bat"                      # Cat clone with syntax highlighting
+brew "btop"                     # Resource monitor (better htop)
+brew "glow"                     # Markdown renderer for terminal
+brew "htop"                     # Interactive process viewer
+brew "jq"                       # JSON processor
+brew "micro"                    # Modern terminal editor
+brew "starship"                 # Cross-shell prompt
+brew "thefuck"                  # Command correction
+brew "tree"                     # Directory listing as tree
+brew "wget"                     # File downloader
+brew "yq"                       # YAML processor
+brew "zsh-syntax-highlighting"  # Fish-like syntax highlighting for zsh
+brew "docker-completion"        # Docker CLI completions
+
+# ============================================
+# Kubernetes & Infrastructure
+# ============================================
+brew "k9s"                      # Kubernetes TUI
+brew "krew"                     # kubectl plugin manager
+brew "kubectl"                  # Kubernetes CLI
+brew "stern"                    # Multi-pod log tailing
+brew "opentofu"                 # Terraform alternative
+brew "sops"                     # Secrets management
+brew "age"                      # Encryption for SOPS
+
+# ============================================
+# Development Tools
+# ============================================
+brew "gradle"                   # Build tool
+brew "maven"                    # Java build tool
+brew "pipx"                     # Python app installer
+brew "uv"                       # Fast Python package manager
+brew "python@3.11"              # Python runtime
+brew "libpq"                    # PostgreSQL client library
+
+# ============================================
+# Media & Document Processing
+# ============================================
+brew "ffmpeg"                   # Video/audio converter
+brew "imagemagick"              # Image manipulation
+brew "librsvg"                  # SVG rendering
+brew "poppler"                  # PDF rendering tools
+brew "plantuml"                 # UML diagram generator
+brew "sox"                      # Audio processing
+
+# ============================================
+# Misc CLI
+# ============================================
+brew "dosbox"                   # DOS emulator
+brew "epubcheck"                # EPUB validator
+brew "sevenzip"                 # 7-Zip archiver
+brew "parallel"                 # Parallel command execution
+brew "ringohub/redis-cli/redis-cli"  # Redis CLI
+
+# ============================================
+# Casks - GUI Applications
+# ============================================
+cask "iterm2"                   # Terminal emulator
+cask "docker"                   # Docker Desktop
+cask "drawio"                   # Diagramming tool
+cask "karabiner-elements"       # Keyboard customizer
+cask "google-cloud-sdk"         # Google Cloud CLI & tools
+cask "zerotier-one"             # Virtual networking / VPN
+cask "mac-mouse-fix"            # Mouse enhancement
+cask "shotcut"                  # Video editor
+cask "wireshark"                # Network analyzer

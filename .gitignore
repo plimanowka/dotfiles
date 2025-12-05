@@ -1,0 +1,9 @@
+# Unencrypted secrets - never commit
+shell/secrets.sh
+secrets/age-key.txt
+
+# macOS
+.DS_Store
+
+# Backups
+*.backup.*
