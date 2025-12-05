@@ -152,13 +152,13 @@ import_secrets() {
 
     # AWS credentials
     if [[ -f ~/.aws/credentials ]]; then
-        sops -e ~/.aws/credentials > "$SECRETS_DIR/aws-credentials.enc"
+        sops --config "$SOPS_CONFIG" -e ~/.aws/credentials > "$SECRETS_DIR/aws-credentials.enc"
         success "~/.aws/credentials -> aws-credentials.enc"
     fi
 
     # AWS config
     if [[ -f ~/.aws/config ]]; then
-        sops -e ~/.aws/config > "$SECRETS_DIR/aws-config.enc"
+        sops --config "$SOPS_CONFIG" -e ~/.aws/config > "$SECRETS_DIR/aws-config.enc"
         success "~/.aws/config -> aws-config.enc"
     fi
 
@@ -166,7 +166,7 @@ import_secrets() {
     for sa in ~/.config/gcloud/*.json; do
         [[ -f "$sa" ]] || continue
         local name=$(basename "$sa" .json)
-        sops -e "$sa" > "$SECRETS_DIR/gcp-${name}.enc.json"
+        sops --config "$SOPS_CONFIG" -e "$sa" > "$SECRETS_DIR/gcp-${name}.enc.json"
         success "$sa -> gcp-${name}.enc.json"
     done
 
@@ -175,7 +175,7 @@ import_secrets() {
         [[ -f "$key" ]] || continue
         [[ "$key" == *.pub ]] && continue  # Skip public keys
         local keyname=$(basename "$key")
-        sops -e "$key" > "$SECRETS_DIR/ssh-${keyname}.enc"
+        sops --config "$SOPS_CONFIG" -e "$key" > "$SECRETS_DIR/ssh-${keyname}.enc"
         success "$key -> ssh-${keyname}.enc"
     done
 
@@ -183,8 +183,8 @@ import_secrets() {
     if [[ -f ~/.dotfiles/shell/secrets.sh ]]; then
         # Convert to YAML format for sops
         grep "^export " ~/.dotfiles/shell/secrets.sh | \
-            sed 's/^export //; s/="/: "/; s/"$//' > /tmp/shell-secrets.yaml
-        sops -e /tmp/shell-secrets.yaml > "$SECRETS_DIR/shell-secrets.enc.yaml"
+            sed 's/^export //; s/=/: /' > /tmp/shell-secrets.yaml
+        sops --config "$SOPS_CONFIG" -e /tmp/shell-secrets.yaml > "$SECRETS_DIR/shell-secrets.enc.yaml"
         rm /tmp/shell-secrets.yaml
         success "Shell secrets -> shell-secrets.enc.yaml"
     fi
