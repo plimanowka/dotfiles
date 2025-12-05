@@ -12,6 +12,7 @@ htop
 fzf
 zsh-syntax-highlighting
 unzip
+zip
 
 # Python
 python3
