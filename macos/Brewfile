@@ -22,6 +22,7 @@ brew "wget"                     # File downloader
 brew "yq"                       # YAML processor
 brew "zsh-syntax-highlighting"  # Fish-like syntax highlighting for zsh
 brew "docker-completion"        # Docker CLI completions
+brew "gh"                       # GitHub CLI
 
 # ============================================
 # Kubernetes & Infrastructure
