@@ -1,0 +1,22 @@
+# DNF packages for Fedora/RHEL
+# Install with: xargs -a dnf-packages.txt sudo dnf install -y
+
+# Core tools
+zsh
+git
+curl
+wget
+jq
+tree
+htop
+fzf
+bat
+ripgrep
+zsh-syntax-highlighting
+
+# Python
+python3
+python3-pip
+
+# Optional (uncomment if needed)
+# age

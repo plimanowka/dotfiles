@@ -70,86 +70,46 @@ if $IS_MACOS; then
     ZSH_HIGHLIGHT_PATH="/opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 else
     # Linux package installation
+    LINUX_DIR="$DOTFILES_DIR/linux"
+
     if command -v apt-get &>/dev/null; then
         info "Installing packages via apt..."
         sudo apt-get update
-        sudo apt-get install -y \
-            zsh \
-            git \
-            curl \
-            wget \
-            jq \
-            tree \
-            htop \
-            fzf \
-            bat \
-            ripgrep \
-            zsh-syntax-highlighting
 
-        # Install starship
-        if ! command -v starship &>/dev/null; then
-            info "Installing starship..."
-            curl -sS https://starship.rs/install.sh | sh -s -- -y
+        # Install packages from external file
+        if [[ -f "$LINUX_DIR/apt-packages.txt" ]]; then
+            grep -v '^#' "$LINUX_DIR/apt-packages.txt" | grep -v '^$' | xargs sudo apt-get install -y
+        else
+            warn "apt-packages.txt not found, installing minimal set"
+            sudo apt-get install -y zsh git curl wget jq
         fi
 
-        # Install micro
-        if ! command -v micro &>/dev/null; then
-            info "Installing micro..."
-            curl https://getmic.ro | bash
-            sudo mv micro /usr/local/bin/
-        fi
-
-        # Install sops
-        if ! command -v sops &>/dev/null; then
-            info "Installing sops..."
-            SOPS_VERSION=$(curl -s https://api.github.com/repos/getsops/sops/releases/latest | jq -r .tag_name)
-            curl -LO "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64"
-            sudo mv "sops-${SOPS_VERSION}.linux.amd64" /usr/local/bin/sops
-            sudo chmod +x /usr/local/bin/sops
-        fi
-
-        # Install age
-        if ! command -v age &>/dev/null; then
-            info "Installing age..."
-            sudo apt-get install -y age || {
-                AGE_VERSION=$(curl -s https://api.github.com/repos/FiloSottile/age/releases/latest | jq -r .tag_name)
-                curl -LO "https://github.com/FiloSottile/age/releases/download/${AGE_VERSION}/age-${AGE_VERSION}-linux-amd64.tar.gz"
-                tar xzf "age-${AGE_VERSION}-linux-amd64.tar.gz"
-                sudo mv age/age age/age-keygen /usr/local/bin/
-                rm -rf age "age-${AGE_VERSION}-linux-amd64.tar.gz"
-            }
-        fi
-
-        # Install thefuck
-        if ! command -v thefuck &>/dev/null; then
-            pip3 install --user thefuck || warn "thefuck installation failed"
-        fi
-
-        # Install GitHub CLI
-        if ! command -v gh &>/dev/null; then
-            info "Installing GitHub CLI..."
-            (
-                curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-                sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-                echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-                sudo apt-get update
-                sudo apt-get install -y gh
-            )
-            success "GitHub CLI installed"
-        fi
-
-        success "Linux packages installed"
+        success "APT packages installed"
         ZSH_HIGHLIGHT_PATH="/usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
     elif command -v dnf &>/dev/null; then
         info "Installing packages via dnf..."
-        sudo dnf install -y zsh git curl wget jq tree htop
-        # Add more packages as needed
+
+        # Install packages from external file
+        if [[ -f "$LINUX_DIR/dnf-packages.txt" ]]; then
+            grep -v '^#' "$LINUX_DIR/dnf-packages.txt" | grep -v '^$' | xargs sudo dnf install -y
+        else
+            warn "dnf-packages.txt not found, installing minimal set"
+            sudo dnf install -y zsh git curl wget jq tree htop
+        fi
+
+        success "DNF packages installed"
         ZSH_HIGHLIGHT_PATH="/usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
     else
         warn "Unknown package manager. Install packages manually."
         ZSH_HIGHLIGHT_PATH=""
     fi
+
+    # Install additional tools (starship, micro, sops, age, gh, etc.)
+    info "Installing additional tools..."
+    source "$LINUX_DIR/install-tools.sh"
+    main
+    success "Linux tools installed"
 fi
 
 # ============================================

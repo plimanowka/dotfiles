@@ -80,6 +80,10 @@ See `SECRETS.md` for details.
 ├── macos/              # macOS-specific setup
 │   ├── Brewfile        # Homebrew packages
 │   └── karabiner.json  # Keyboard config
+├── linux/              # Linux-specific setup
+│   ├── apt-packages.txt    # Debian/Ubuntu packages
+│   ├── dnf-packages.txt    # Fedora/RHEL packages
+│   └── install-tools.sh    # Tool installers (starship, micro, etc.)
 ├── secrets/            # Encrypted secrets (safe to commit)
 │   ├── .sops.yaml      # SOPS configuration
 │   ├── age-key.txt     # Master key (NEVER COMMIT!)
