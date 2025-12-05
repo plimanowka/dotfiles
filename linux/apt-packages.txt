@@ -10,13 +10,13 @@ jq
 tree
 htop
 fzf
-bat
-ripgrep
 zsh-syntax-highlighting
+unzip
 
 # Python
 python3
 python3-pip
 
-# Optional (uncomment if needed)
-# age
+# Note: bat/ripgrep have different names on Ubuntu
+# bat -> installed via install-tools.sh (batcat symlink or manual)
+# ripgrep -> installed via install-tools.sh

@@ -17,6 +17,52 @@ warn()    { echo -e "${YELLOW}[WARN]${NC} $1"; }
 
 LINUX_DIR="$(dirname "$0")"
 
+# Detect architecture
+ARCH="$(uname -m)"
+case "$ARCH" in
+    x86_64)  ARCH_ALT="amd64" ;;
+    aarch64|arm64) ARCH_ALT="arm64" ;;
+    *) ARCH_ALT="amd64" ;;
+esac
+
+# ============================================
+# bat (cat replacement)
+# ============================================
+install_bat() {
+    if ! command -v bat &>/dev/null && ! command -v batcat &>/dev/null; then
+        info "Installing bat..."
+        if command -v apt-get &>/dev/null; then
+            # Ubuntu/Debian - package is named 'bat' but binary is 'batcat'
+            sudo apt-get install -y bat 2>/dev/null && {
+                # Create symlink for 'bat' command
+                sudo ln -sf /usr/bin/batcat /usr/local/bin/bat 2>/dev/null || true
+            }
+        elif command -v dnf &>/dev/null; then
+            sudo dnf install -y bat
+        fi
+        success "bat installed"
+    else
+        success "bat already installed"
+    fi
+}
+
+# ============================================
+# ripgrep (grep replacement)
+# ============================================
+install_ripgrep() {
+    if ! command -v rg &>/dev/null; then
+        info "Installing ripgrep..."
+        if command -v apt-get &>/dev/null; then
+            sudo apt-get install -y ripgrep
+        elif command -v dnf &>/dev/null; then
+            sudo dnf install -y ripgrep
+        fi
+        success "ripgrep installed"
+    else
+        success "ripgrep already installed"
+    fi
+}
+
 # ============================================
 # Starship
 # ============================================
@@ -52,8 +98,8 @@ install_sops() {
     if ! command -v sops &>/dev/null; then
         info "Installing sops..."
         SOPS_VERSION=$(curl -s https://api.github.com/repos/getsops/sops/releases/latest | jq -r .tag_name)
-        curl -LO "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64"
-        sudo mv "sops-${SOPS_VERSION}.linux.amd64" /usr/local/bin/sops
+        curl -LO "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.${ARCH_ALT}"
+        sudo mv "sops-${SOPS_VERSION}.linux.${ARCH_ALT}" /usr/local/bin/sops
         sudo chmod +x /usr/local/bin/sops
         success "SOPS installed"
     else
@@ -82,10 +128,10 @@ install_age() {
 _install_age_manual() {
     AGE_VERSION=$(curl -s https://api.github.com/repos/FiloSottile/age/releases/latest | jq -r .tag_name)
     cd /tmp
-    curl -LO "https://github.com/FiloSottile/age/releases/download/${AGE_VERSION}/age-${AGE_VERSION}-linux-amd64.tar.gz"
-    tar xzf "age-${AGE_VERSION}-linux-amd64.tar.gz"
+    curl -LO "https://github.com/FiloSottile/age/releases/download/${AGE_VERSION}/age-${AGE_VERSION}-linux-${ARCH_ALT}.tar.gz"
+    tar xzf "age-${AGE_VERSION}-linux-${ARCH_ALT}.tar.gz"
     sudo mv age/age age/age-keygen /usr/local/bin/
-    rm -rf age "age-${AGE_VERSION}-linux-amd64.tar.gz"
+    rm -rf age "age-${AGE_VERSION}-linux-${ARCH_ALT}.tar.gz"
 }
 
 # ============================================
@@ -191,6 +237,8 @@ install_imagemagick() {
 # Main
 # ============================================
 main() {
+    install_bat
+    install_ripgrep
     install_starship
     install_micro
     install_sops
