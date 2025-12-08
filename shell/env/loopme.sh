@@ -6,3 +6,4 @@
 
 export LOOPME_DIR="$HOME/dev/loopme"
 export ANGULAR_WEBJARS_DIR="$LOOPME_DIR/angular-webjars"
+export ADS_MONOREPO_DIR="$LOOPME_DIR/ads-monorepo"
