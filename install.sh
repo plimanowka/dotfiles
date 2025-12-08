@@ -226,6 +226,11 @@ source ~/.config/shell/show.sh
 # Secrets (API keys, tokens, etc.)
 [[ -f ~/.config/shell/secrets.sh ]] && source ~/.config/shell/secrets.sh
 
+# Project-specific environment variables
+for envfile in ~/.config/shell/env/*.sh; do
+    [[ -f "\$envfile" ]] && source "\$envfile"
+done
+
 # SDKMAN - must be near the end
 source ~/.config/shell/sdkman.sh
 
