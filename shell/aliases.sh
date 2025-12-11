@@ -14,3 +14,6 @@ alias l="ls -CF"
 export EDITOR="micro"
 export VISUAL="micro"
 alias edit="micro"
+
+# ClaudeCode
+alias ccusage="npx ccusage@latest"
