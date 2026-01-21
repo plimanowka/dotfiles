@@ -222,6 +222,7 @@ source ~/.config/shell/completions.sh
 source ~/.config/shell/kubernetes/init.sh
 source ~/.config/shell/showimg.sh
 source ~/.config/shell/show.sh
+source ~/.config/shell/claude.sh
 
 # Secrets (API keys, tokens, etc.)
 [[ -f ~/.config/shell/secrets.sh ]] && source ~/.config/shell/secrets.sh
