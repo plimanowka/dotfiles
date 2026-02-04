@@ -74,7 +74,7 @@ EOF
     else
       case "$ext" in
         md|markdown)
-          glow -p -
+          glow -p -w 0 -
           ;;
         jpg|jpeg|png|gif|bmp|tiff|webp|svg|image)
           imgcat
@@ -96,7 +96,7 @@ EOF
   # Render based on extension
   case "$ext" in
     md|markdown)
-      glow -p "$file"
+      glow -p -w 0 "$file"
       ;;
     pdf)
       _show_pdf "$file" "$pdf_pages"
