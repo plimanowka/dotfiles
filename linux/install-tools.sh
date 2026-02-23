@@ -234,6 +234,23 @@ install_imagemagick() {
 }
 
 # ============================================
+# Go
+# ============================================
+install_go() {
+    if ! command -v go &>/dev/null; then
+        info "Installing Go..."
+        GO_VERSION=$(curl -s https://go.dev/VERSION?m=text | head -1)
+        curl -LO "https://go.dev/dl/${GO_VERSION}.linux-${ARCH_ALT}.tar.gz"
+        sudo rm -rf /usr/local/go
+        sudo tar -C /usr/local -xzf "${GO_VERSION}.linux-${ARCH_ALT}.tar.gz"
+        rm -f "${GO_VERSION}.linux-${ARCH_ALT}.tar.gz"
+        success "Go installed"
+    else
+        success "Go already installed"
+    fi
+}
+
+# ============================================
 # Main
 # ============================================
 main() {
@@ -248,6 +265,7 @@ main() {
     install_glow
     install_poppler
     install_imagemagick
+    install_go
 }
 
 # Run if called directly

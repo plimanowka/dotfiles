@@ -38,6 +38,7 @@ brew "age"                      # Encryption for SOPS
 # ============================================
 # Development Tools
 # ============================================
+brew "go"                       # Go programming language
 brew "gradle"                   # Build tool
 brew "maven"                    # Java build tool
 brew "pipx"                     # Python app installer

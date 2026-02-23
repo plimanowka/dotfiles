@@ -190,8 +190,10 @@ info "Installing .zshrc..."
 # Determine paths based on OS
 if $IS_MACOS; then
     LIBPQ_PATH='export PATH="/opt/homebrew/opt/libpq/bin:$PATH"'
+    GO_ROOT_PATH='# go managed by Homebrew'
 else
     LIBPQ_PATH='# libpq path (set if needed)'
+    GO_ROOT_PATH='export PATH="$PATH:/usr/local/go/bin"              # go compiler'
 fi
 
 cat > "$HOME/.zshrc" << ZSHRC
@@ -210,6 +212,8 @@ source ~/.config/shell/thefuck.sh
 
 # PATH additions
 export PATH="\$PATH:\$HOME/.local/bin"              # pipx
+export PATH="\$PATH:\$HOME/go/bin"                  # go install binaries
+$GO_ROOT_PATH
 $LIBPQ_PATH
 
 # Tool PATH setup (before completions)
