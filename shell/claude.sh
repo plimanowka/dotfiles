@@ -1,60 +1,51 @@
 # Claude Code multi-account support
-# See docs/CLAUDE.md for setup instructions
+# Uses long-lived OAuth tokens (from `claude setup-token`) with
+# CLAUDE_CODE_OAUTH_TOKEN env var. Each terminal gets its own token,
+# so concurrent sessions with different accounts work.
+#
+# Setup:
+#   1. claude auth login   (login as personal)
+#   2. claude setup-token  (copy the token)
+#   3. claude-save-token personal <token>
+#   4. claude auth logout && claude auth login  (login as loopme)
+#   5. claude setup-token  (copy the token)
+#   6. claude-save-token loopme <token>
 
 CLAUDE_PROFILES_DIR="$HOME/.claude-profiles"
 
-_claude_switch_profile() {
+claude-save-token() {
     local profile="$1"
-    local token_file="$CLAUDE_PROFILES_DIR/${profile}-token"
+    local token="$2"
 
-    if [[ ! -f "$token_file" ]]; then
-        echo "Profile '$profile' not found. Run setup first:"
-        echo "  See: ~/.dotfiles/docs/CLAUDE.md"
-        return 1
-    fi
-
-    # Swap keychain credential
-    security delete-generic-password -s "Claude Code-credentials" 2>/dev/null
-    security add-generic-password -s "Claude Code-credentials" -a "$(whoami)" \
-        -w "$(cat "$token_file")" 2>/dev/null
-
-    if [[ $? -eq 0 ]]; then
-        echo "Switched to Claude profile: $profile"
-    else
-        echo "Failed to switch profile"
-        return 1
-    fi
-}
-
-claude-loopme() {
-    _claude_switch_profile "loopme" && claude "$@"
-}
-
-claude-personal() {
-    _claude_switch_profile "personal" && claude "$@"
-}
-
-# Save current Claude credentials to a profile
-claude-save-profile() {
-    local profile="$1"
-
-    if [[ -z "$profile" ]]; then
-        echo "Usage: claude-save-profile <profile-name>"
-        echo "Example: claude-save-profile loopme"
+    if [[ -z "$profile" || -z "$token" ]]; then
+        echo "Usage: claude-save-token <profile-name> <token>"
+        echo "Example: claude-save-token personal sk-ant-oat01-..."
         return 1
     fi
 
     mkdir -p "$CLAUDE_PROFILES_DIR"
     chmod 700 "$CLAUDE_PROFILES_DIR"
 
-    local token_file="$CLAUDE_PROFILES_DIR/${profile}-token"
+    local token_file="$CLAUDE_PROFILES_DIR/${profile}-oauth"
+    printf '%s' "$token" > "$token_file"
+    chmod 600 "$token_file"
+    echo "Saved OAuth token for profile: $profile"
+}
 
-    if ! security find-generic-password -s "Claude Code-credentials" -w > "$token_file" 2>/dev/null; then
-        echo "No Claude credentials found in keychain."
-        echo "Login first with: claude"
+claude-personal() {
+    local token_file="$CLAUDE_PROFILES_DIR/personal-oauth"
+    if [[ ! -f "$token_file" ]]; then
+        echo "No personal token found. Run: claude-save-token personal <token>"
         return 1
     fi
+    CLAUDE_CODE_OAUTH_TOKEN="$(cat "$token_file")" claude "$@"
+}
 
-    chmod 600 "$token_file"
-    echo "Saved current Claude credentials to profile: $profile"
+claude-loopme() {
+    local token_file="$CLAUDE_PROFILES_DIR/loopme-oauth"
+    if [[ ! -f "$token_file" ]]; then
+        echo "No loopme token found. Run: claude-save-token loopme <token>"
+        return 1
+    fi
+    CLAUDE_CODE_OAUTH_TOKEN="$(cat "$token_file")" claude "$@"
 }
