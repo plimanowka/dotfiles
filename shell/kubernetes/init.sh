@@ -17,5 +17,6 @@ source "$_K8S_TOOLS_DIR/k8pods.sh"     # List pods across clusters
 source "$_K8S_TOOLS_DIR/k8deps.sh"     # List deployments across clusters
 source "$_K8S_TOOLS_DIR/k8images.sh"   # List images across clusters
 source "$_K8S_TOOLS_DIR/k8logs.sh"     # Collect logs across clusters
+source "$_K8S_TOOLS_DIR/k8stern.sh"    # Stream live logs across clusters
 
 unset _K8S_TOOLS_DIR

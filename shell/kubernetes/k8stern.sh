@@ -1,0 +1,146 @@
+# k8stern - Stream live logs across POP clusters using stern
+#
+# Requires: stern (brew install stern)
+# Depends on: k8dcs.sh (for DC mappings)
+
+k8stern() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    cat <<'EOF'
+k8stern - Stream live logs across POP clusters using stern
+
+Usage: k8stern [-c context] [-n namespace] [-l selector] [-s since]
+               [-o output] [stern-flags...] <pod-query>
+
+Options:
+  -c CONTEXT    Specific context/POP or DC name (default: all POPs)
+  -n NAMESPACE  Kubernetes namespace (default: all namespaces)
+  -l SELECTOR   Label selector (e.g., track=canary)
+  -s SINCE      Only show logs newer than duration (e.g., 5m, 1h)
+  -o OUTPUT     Stern output format: default, raw, json, extjson (default: default)
+  -h, --help    Show this help
+
+Extra flags after '--' are passed directly to stern.
+
+Examples:
+  k8stern ads-dsp-api                           # Tail across all POPs
+  k8stern -c pop-001-ew1 ads-dsp-api            # Single POP (by context)
+  k8stern -c eu-west1 ads-dsp-api               # Single POP (by DC name)
+  k8stern -l track=canary ads-dsp-api           # Only canary pods
+  k8stern -n dsp -s 5m ads-dsp-api              # Last 5m, dsp namespace
+  k8stern -l track=canary -- --tail 100 dsp-api # Extra stern flags after --
+
+Stop: Ctrl-C (kills all stern processes)
+
+Dependencies: stern, k8dcs.sh
+EOF
+    return 0
+  fi
+
+  if ! command -v stern &>/dev/null; then
+    >&2 echo "k8stern: 'stern' not found. Install with: brew install stern"
+    return 1
+  fi
+
+  local context="" namespace="" selector="" since="" output="default"
+
+  # Parse options
+  while getopts "c:n:l:s:o:h" opt; do
+    case $opt in
+      c) context=${OPTARG} ;;
+      n) namespace=${OPTARG} ;;
+      l) selector=${OPTARG} ;;
+      s) since=${OPTARG} ;;
+      o) output=${OPTARG} ;;
+      h) k8stern --help; return 0 ;;
+      :) >&2 echo "k8stern: option -${OPTARG} requires an argument"; return 1 ;;
+      *) >&2 echo "k8stern: invalid option -${OPTARG}"; return 1 ;;
+    esac
+  done
+  shift $((OPTIND-1))
+  OPTIND=1  # Reset for next getopts call
+
+  # Convert DC name to context if needed
+  if [[ -n "$context" ]]; then
+    context=$(k8ctx-from "$context" 2>/dev/null) || {
+      >&2 echo "k8stern: invalid context or DC name: $context"
+      return 1
+    }
+  fi
+
+  if [[ -z "$1" ]]; then
+    >&2 echo "k8stern: missing pod query"
+    >&2 echo "Usage: k8stern [-c context] [-n namespace] [-l selector] [-s since] <pod-query>"
+    return 1
+  fi
+
+  local pod_query="$1"; shift
+  # Remaining args are passed through to stern
+  local extra_args=("$@")
+
+  # Build common stern args
+  local stern_args=()
+  [[ -n "$namespace" ]] && stern_args+=(-n "$namespace") || stern_args+=(-A)
+  [[ -n "$selector" ]]  && stern_args+=(-l "$selector")
+  [[ -n "$since" ]]     && stern_args+=(-s "$since")
+  stern_args+=("${extra_args[@]}")
+
+  if [[ -n "$context" ]]; then
+    # Single context - direct execution, use -o for output format
+    local dc=$(k8dc-from "$context" 2>/dev/null || echo "$context")
+    >&2 echo "k8stern: streaming $pod_query from $dc ($context)"
+    stern "$pod_query" --context "$context" -o "$output" "${stern_args[@]}"
+  else
+    # All POPs - launch stern per context with DC-prefixed template
+    local contexts=($(k8dcs))
+    local pids=()
+
+    >&2 echo "k8stern: streaming $pod_query across ${#contexts[@]} POPs"
+    [[ -n "$selector" ]] && >&2 echo "k8stern: selector=$selector"
+
+    # Trap to clean up all background stern processes
+    trap '_k8stern_cleanup' INT TERM
+
+    for ctx in "${contexts[@]}"; do
+      local dc=$(k8dc-from "$ctx" 2>/dev/null || echo "$ctx")
+      stern "$pod_query" --context "$ctx" \
+        --template "{{color .PodColor .PodName}} {{color .ContainerColor .ContainerName}} [${dc}] {{.Message}}"$'\n' \
+        "${stern_args[@]}" &
+      pids+=($!)
+    done
+
+    >&2 echo "k8stern: PIDs: ${pids[*]} (Ctrl-C to stop)"
+
+    # Wait for all — if any exits, keep waiting for the rest
+    wait "${pids[@]}" 2>/dev/null
+
+    trap - INT TERM
+  fi
+}
+
+_k8stern_cleanup() {
+  >&2 echo ""
+  >&2 echo "k8stern: stopping..."
+  # Kill all child processes of this shell function
+  kill ${pids[@]} 2>/dev/null
+  wait ${pids[@]} 2>/dev/null
+  trap - INT TERM
+}
+
+# Completion
+_k8stern() {
+  local -a contexts dcs outputs
+  contexts=(${(k)_k8_ctx2dc})
+  dcs=(${(k)_k8_dc2ctx})
+  outputs=(default raw json extjson ppextjson)
+
+  _arguments \
+    "-c[Context/POP or DC name]:context:(${contexts} ${dcs})" \
+    '-n[Namespace]:namespace:' \
+    '-l[Label selector]:selector:' \
+    '-s[Since duration]:since:' \
+    "-o[Output format]:output:(${outputs})" \
+    '-h[Show help]' \
+    '*:pod query:'
+}
+
+compdef _k8stern k8stern
