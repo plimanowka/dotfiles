@@ -25,9 +25,13 @@ Examples:
   k8stern ads-dsp-api                           # Tail across all POPs
   k8stern -c pop-001-ew1 ads-dsp-api            # Single POP (by context)
   k8stern -c eu-west1 ads-dsp-api               # Single POP (by DC name)
-  k8stern -l track=canary ads-dsp-api           # Only canary pods
   k8stern -n dsp -s 5m ads-dsp-api              # Last 5m, dsp namespace
-  k8stern -l track=canary -- --tail 100 dsp-api # Extra stern flags after --
+  k8stern -n dsp ads-dsp-api -- --tail 100      # Extra stern flags after --
+
+Search (batch mode with --no-follow):
+  k8stern -n dsp ads-dsp-api -- --no-follow --tail 10000 | grep ERROR
+  k8stern -n dsp ads-dsp-api -- --no-follow --tail 10000 | grep ERROR | cut -c1-$COLUMNS
+  k8stern -n dsp ads-dsp-api -- --no-follow -i "OutOfMemory"
 
 Stop: Ctrl-C (kills all stern processes)
 
