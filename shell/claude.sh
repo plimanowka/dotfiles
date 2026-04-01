@@ -38,7 +38,7 @@ claude-personal() {
         echo "No personal token found. Run: claude-save-token personal <token>"
         return 1
     fi
-    CLAUDE_CODE_OAUTH_TOKEN="$(cat "$token_file")" claude "$@"
+    CLAUDE_CODE_OAUTH_TOKEN="$(cat "$token_file")" CLAUDE_PROFILE="personal" claude "$@"
 }
 
 claude-loopme() {
@@ -47,5 +47,5 @@ claude-loopme() {
         echo "No loopme token found. Run: claude-save-token loopme <token>"
         return 1
     fi
-    CLAUDE_CODE_OAUTH_TOKEN="$(cat "$token_file")" claude "$@"
+    CLAUDE_CODE_OAUTH_TOKEN="$(cat "$token_file")" CLAUDE_PROFILE="loopme" claude "$@"
 }
