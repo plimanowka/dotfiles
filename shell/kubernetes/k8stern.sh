@@ -74,7 +74,8 @@ EOF
   fi
 
   local pod_query="$1"; shift
-  # Remaining args are passed through to stern
+  # Strip '--' separator if present, pass rest through to stern
+  [[ "$1" == "--" ]] && shift
   local extra_args=("$@")
 
   # Build common stern args
@@ -90,40 +91,39 @@ EOF
     >&2 echo "k8stern: streaming $pod_query from $dc ($context)"
     stern "$pod_query" --context "$context" -o "$output" "${stern_args[@]}"
   else
-    # All POPs - launch stern per context with DC-prefixed template
+    # All POPs
     local contexts=($(k8dcs))
-    local pids=()
+    local no_follow=false
+    [[ " ${stern_args[*]} " == *" --no-follow "* ]] && no_follow=true
 
     >&2 echo "k8stern: streaming $pod_query across ${#contexts[@]} POPs"
     [[ -n "$selector" ]] && >&2 echo "k8stern: selector=$selector"
 
-    # Trap to clean up all background stern processes
-    trap '_k8stern_cleanup' INT TERM
+    if $no_follow; then
+      # Batch mode: run each context sequentially in foreground
+      for ctx in "${contexts[@]}"; do
+        local dc=$(k8dc-from "$ctx" 2>/dev/null || echo "$ctx")
+        >&2 echo "k8stern: querying $dc..."
+        stern "$pod_query" --context "$ctx" \
+          -o "$output" "${stern_args[@]}" 2>/dev/null \
+          | sed "s/^/[${dc}] /"
+      done
+    else
+      # Live mode: background per context, interleaved output
+      >&2 echo "k8stern: Ctrl-C to stop"
 
-    for ctx in "${contexts[@]}"; do
-      local dc=$(k8dc-from "$ctx" 2>/dev/null || echo "$ctx")
-      stern "$pod_query" --context "$ctx" \
-        --template "{{color .PodColor .PodName}} {{color .ContainerColor .ContainerName}} [${dc}] {{.Message}}"$'\n' \
-        "${stern_args[@]}" &
-      pids+=($!)
-    done
+      for ctx in "${contexts[@]}"; do
+        local dc=$(k8dc-from "$ctx" 2>/dev/null || echo "$ctx")
+        stern "$pod_query" --context "$ctx" \
+          --color always -o "$output" "${stern_args[@]}" \
+          | sed -u "s/^/[${dc}] /" &
+      done
 
-    >&2 echo "k8stern: PIDs: ${pids[*]} (Ctrl-C to stop)"
-
-    # Wait for all — if any exits, keep waiting for the rest
-    wait "${pids[@]}" 2>/dev/null
-
-    trap - INT TERM
+      trap 'pkill -P $$ stern 2>/dev/null; wait 2>/dev/null; trap - INT TERM; return' INT TERM
+      wait 2>/dev/null
+      trap - INT TERM
+    fi
   fi
-}
-
-_k8stern_cleanup() {
-  >&2 echo ""
-  >&2 echo "k8stern: stopping..."
-  # Kill all child processes of this shell function
-  kill ${pids[@]} 2>/dev/null
-  wait ${pids[@]} 2>/dev/null
-  trap - INT TERM
 }
 
 # Completion
