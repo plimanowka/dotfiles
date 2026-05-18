@@ -215,6 +215,7 @@ export PATH="\$PATH:\$HOME/.local/bin"              # pipx
 export PATH="\$PATH:\$HOME/go/bin"                  # go install binaries
 $GO_ROOT_PATH
 $LIBPQ_PATH
+export PATH="\$HOME/.dotfiles/bin:\$PATH"           # dotfiles scripts
 
 # Tool PATH setup (before completions)
 source ~/.config/shell/gcloud.sh

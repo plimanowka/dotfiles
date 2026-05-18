@@ -17,3 +17,6 @@ alias edit="micro"
 
 # ClaudeCode
 alias ccusage="npx ccusage@latest"
+
+# ZeroTier
+alias ztr="zt-restart.sh"
