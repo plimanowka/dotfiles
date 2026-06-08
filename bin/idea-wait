@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# idea-wait — open file(s) in IntelliJ and block until closed, for use as
+# $EDITOR/$VISUAL inside the JetBrains terminal (wired in shell/aliases.sh).
+#
+# Adds two things over a bare `idea --wait`:
+#   - --wait so git, claude's ctrl-g, crontab, etc. block until the tab closes
+#   - caret placed at the END of the last file argument (a bare launcher puts
+#     it at 1:1, which is wrong when you're appending to an existing prompt).
+#
+# Markdown opening in preview and Cmd-W discarding unsaved edits are IDE
+# settings, not fixable here — see docs/README.md ("IntelliJ as $EDITOR").
+set -euo pipefail
+
+# If the Toolbox launcher isn't reachable, degrade to a terminal editor rather
+# than leaving the caller with a broken $EDITOR.
+if ! command -v idea >/dev/null 2>&1; then
+    exec "${VISUAL_FALLBACK:-micro}" "$@"
+fi
+
+# Caret target: the last argument that is an existing regular file.
+file=""
+for arg in "$@"; do
+    [[ -f "$arg" ]] && file="$arg"
+done
+
+args=(--wait)
+if [[ -n "$file" ]]; then
+    # End of file = last line number, column = its character length + 1.
+    # Empty file → 1:1. awk END sees the final record in $0.
+    line=$(awk 'END { print (NR > 0 ? NR : 1) }' "$file")
+    col=$(awk 'END { print length($0) + 1 }' "$file")
+    args+=(--line "$line" --column "$col")
+fi
+
+exec idea "${args[@]}" "$@"
