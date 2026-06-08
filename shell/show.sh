@@ -28,9 +28,18 @@ Examples:
 Options:
   -t, --type TYPE    Force file type (json, yaml, xml, md, pdf, image, etc.)
   -p, --pages RANGE  PDF page range (e.g., 1, 1-5, 2-4)
+  -I, --ide          Open in a GUI previewer instead of the terminal:
+                       md/images/svg → IntelliJ, pdf → Preview.app, html → browser
   -h, --help         Show this help
 
-Dependencies: glow, bat, imgcat, imagemagick, librsvg, poppler
+In the IntelliJ terminal (JediTerm), images/PDFs/SVGs auto-open in a GUI
+previewer since they can't render inline there; markdown/code stay inline.
+A URL (http/https) always opens in the browser.
+
+Markdown IDE preview needs the rendered pane as default:
+  Settings → Languages & Frameworks → Markdown → Default layout = Preview (or Split)
+
+Dependencies: glow, bat, imgcat, imagemagick, librsvg, poppler; idea/open for GUI
 EOF
     return 0
   fi
@@ -38,6 +47,7 @@ EOF
   local file=""
   local forced_type=""
   local pdf_pages=""
+  local force_ide=""
 
   # Parse arguments
   while [[ $# -gt 0 ]]; do
@@ -49,6 +59,10 @@ EOF
       -p|--pages)
         pdf_pages="$2"
         shift 2
+        ;;
+      -I|--ide)
+        force_ide=1
+        shift
         ;;
       *)
         file="$1"
@@ -87,10 +101,23 @@ EOF
     return
   fi
 
+  # URL → open in the browser (nothing to render in a terminal)
+  if [[ "$file" =~ ^https?:// ]]; then
+    open "$file"
+    return
+  fi
+
   # Check file exists
   if [[ ! -f "$file" ]]; then
     echo "show: file not found: $file" >&2
     return 1
+  fi
+
+  # Route visual formats to a GUI previewer when forced (-I) or when running in
+  # the IntelliJ terminal (JediTerm can't render inline images/PDFs). Markdown
+  # and HTML only route under -I; otherwise they fall through to inline rendering.
+  if [[ -n "$force_ide" || "$TERMINAL_EMULATOR" == "JetBrains-JediTerm" ]]; then
+    _show_gui "$file" "$ext" "$force_ide" && return
   fi
 
   # Render based on extension
@@ -110,6 +137,27 @@ EOF
     *)
       bat --paging=auto --style=plain "$file"
       ;;
+  esac
+}
+
+# Open a file in the best GUI previewer. Returns non-zero (2) for types that
+# have no GUI handler, or that should stay inline in auto mode, so the caller
+# falls back to terminal rendering. $3 (forced) is set when -I was passed.
+_show_gui() {
+  local file="$1" ext="$2" forced="$3"
+  case "$ext" in
+    jpg|jpeg|png|gif|bmp|tiff|webp|svg|image)
+      idea "$file" ;;                   # IntelliJ image viewer (renders SVG too)
+    pdf)
+      open "$file" ;;                   # Preview.app
+    md|markdown)
+      [[ -n "$forced" ]] || return 2    # auto: keep inline glow; only -I → IDE
+      idea "$file" ;;                   # IntelliJ markdown preview
+    html|htm)
+      [[ -n "$forced" ]] || return 2    # auto: keep bat source; only -I → browser
+      open "$file" ;;
+    *)
+      return 2 ;;
   esac
 }
 
@@ -170,6 +218,8 @@ _show() {
     '--type[Force file type]:type:(json yaml xml md markdown pdf image)' \
     '-p[PDF page range]:pages:' \
     '--pages[PDF page range]:pages:' \
+    '-I[Open in GUI previewer]' \
+    '--ide[Open in GUI previewer]' \
     '-h[Show help]' \
     '--help[Show help]' \
     '*:file:_files'
