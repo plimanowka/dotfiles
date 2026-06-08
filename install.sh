@@ -216,6 +216,7 @@ export PATH="\$PATH:\$HOME/go/bin"                  # go install binaries
 $GO_ROOT_PATH
 $LIBPQ_PATH
 export PATH="\$HOME/.dotfiles/bin:\$PATH"           # dotfiles scripts
+export PATH="\$PATH:\$HOME/.config/shell/idea"      # JetBrains Toolbox launchers (idea, gateway)
 
 # Tool PATH setup (before completions)
 source ~/.config/shell/gcloud.sh

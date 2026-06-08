@@ -7,3 +7,6 @@ secrets/age-key.txt
 
 # Backups
 *.backup.*
+
+# JetBrains Toolbox-generated IDE launchers (idea, gateway) - regenerate per machine
+shell/idea/
