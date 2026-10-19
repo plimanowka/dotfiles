@@ -13,10 +13,6 @@
 
 CLAUDE_PROFILES_DIR="$HOME/.claude-profiles"
 
-claude() {
-    command claude --permission-mode auto "$@"
-}
-
 claude-save-token() {
     local profile="$1"
     local token="$2"
