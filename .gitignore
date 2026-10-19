@@ -10,3 +10,4 @@ secrets/age-key.txt
 
 # JetBrains Toolbox-generated IDE launchers (idea, gateway) - regenerate per machine
 shell/idea/
+.idea
