@@ -11,34 +11,30 @@ Encrypted secrets storage using SOPS + age. Secrets can be safely committed to g
 │ API keys        │                  │ shell-secrets.enc    │
 └─────────────────┘                  └──────────────────────┘
                                               │
-                         age-key.txt          │ decrypt
-                      (KEEP THIS SAFE!)       │
+                    sops/age/keys.txt         │ decrypt
+                   (this machine's key)       │
                               │               ▼
                               │      ┌─────────────────┐
                               └────► │ Original files  │
                                      └─────────────────┘
 ```
 
+Every file is encrypted to all recipients listed in `.sops.yaml` (repo root), so any one of
+their private keys can decrypt it:
+
+| Recipient | Private key lives in |
+|-----------|----------------------|
+| One key per machine | that machine's SOPS default key file (see below) |
+| Offline backup key | printout + private 1Password, never on disk |
+| Shared key `age1lzu42…` (legacy) | key files of machines without their own key yet; remove once every machine has one |
+
+The same recipient list is used by the zamelduj repo.
+
+SOPS default key file: `~/Library/Application Support/sops/age/keys.txt` on macOS,
+`~/.config/sops/age/keys.txt` on Linux (`$XDG_CONFIG_HOME/sops/age/keys.txt` if set,
+`$SOPS_AGE_KEY_FILE` overrides). One file can hold several keys.
+
 ## Quick Start
-
-### First-time setup (on your main machine)
-
-```bash
-# 1. Import your existing secrets
-~/.dotfiles/secrets/secrets-manager.sh import
-
-# 2. Commit encrypted secrets to git
-cd ~/.dotfiles
-git add secrets/*.enc*
-git commit -m "Add encrypted secrets"
-git push
-
-# 3. BACKUP YOUR AGE KEY!
-# Store ~/.dotfiles/secrets/age-key.txt in:
-# - Password manager (1Password, Bitwarden, etc.)
-# - Secure note
-# - Encrypted USB drive
-```
 
 ### On a new machine
 
@@ -46,16 +42,35 @@ git push
 # 1. Clone dotfiles
 git clone https://github.com/YOU/dotfiles.git ~/.dotfiles
 
-# 2. Copy age key from your backup
-# (paste from password manager, etc.)
-nano ~/.dotfiles/secrets/age-key.txt
-
-# 3. Run install
+# 2. Run install
 ~/.dotfiles/install.sh
+
+# 3. Give the machine its own key (see "Adding a machine"), or to decrypt right away,
+#    append the offline backup key to the SOPS default key file
 
 # 4. Decrypt secrets
 ~/.dotfiles/secrets/secrets-manager.sh export
 ```
+
+### Adding a machine
+
+```bash
+# On the new machine (macOS path; Linux: ~/.config/sops/age)
+mkdir -p ~/Library/Application\ Support/sops/age
+age-keygen -o ~/Library/Application\ Support/sops/age/keys.txt   # prints the public key
+
+# On a machine that can decrypt: add the public key to .sops.yaml, then
+cd ~/.dotfiles
+for f in secrets/*.enc*; do sops updatekeys -y "$f"; done
+git commit -am "Add <machine> age recipient" && git push
+
+# Back on the new machine
+git pull && ~/.dotfiles/secrets/secrets-manager.sh export
+```
+
+Removing a machine works the same way (drop its line from `.sops.yaml`, run `updatekeys`).
+That does NOT revoke access to ciphertext already in git history — rotate the actual secret
+values if the removed key may be compromised.
 
 ## Commands
 
@@ -92,26 +107,24 @@ secrets-manager.sh list
 ## File Structure
 
 ```
-~/.dotfiles/secrets/
-├── .sops.yaml              # SOPS configuration
-├── age-key.txt             # Master key (NEVER COMMIT!)
-├── secrets-manager.sh      # Management script
-├── aws-credentials.enc     # Encrypted AWS creds
-├── aws-config.enc          # Encrypted AWS config
-├── gcp-service-account.enc.json
-├── ssh-id_rsa.enc          # Encrypted SSH key
-├── ssh-id_ed25519.enc
-└── shell-secrets.enc.yaml  # API keys, tokens
+~/.dotfiles/
+├── .sops.yaml                  # Recipients (age public keys)
+└── secrets/
+    ├── secrets-manager.sh      # Management script
+    ├── aws-credentials.enc     # Encrypted AWS creds
+    ├── aws-config.enc          # Encrypted AWS config
+    ├── gcp-*.enc.json
+    ├── ssh-id_ed25519_*.enc    # Encrypted SSH keys
+    └── shell-secrets.enc.yaml  # API keys, tokens
 ```
 
 ## Security Notes
 
-### age-key.txt
+### Private keys
 
-- This is your master encryption key
-- **NEVER commit to git** (already in .gitignore)
-- Without it, secrets CANNOT be decrypted
-- Store backup in password manager
+- Never inside the repo checkout (old `secrets/age-key.txt` stays in .gitignore as a guard)
+- Lose every machine key → decrypt with the offline backup key
+- Lose the backup too → secrets CANNOT be decrypted
 
 ### What's safe to commit
 
@@ -130,39 +143,31 @@ secrets-manager.sh edit aws-credentials.enc
 secrets-manager.sh encrypt ~/.aws/credentials aws-credentials
 ```
 
-### Rotating age key
-
-If your age key is compromised:
+### Rotating a compromised key
 
 ```bash
-# 1. Generate new key
-age-keygen -o ~/.dotfiles/secrets/age-key-new.txt
+# 1. Remove its public key from .sops.yaml (add a fresh one if it was a machine key)
 
-# 2. Update .sops.yaml with new public key
-
-# 3. Re-encrypt all secrets
-for f in ~/.dotfiles/secrets/*.enc*; do
-    sops --rotate -i "$f"
+# 2. Re-key and rotate the data key of every file
+for f in secrets/*.enc*; do
+    sops updatekeys -y "$f" && sops --rotate -i "$f"
 done
 
-# 4. Replace old key
-mv age-key-new.txt age-key.txt
-
-# 5. Update backup in password manager
+# 3. Rotate the secret values themselves — old ciphertext stays in git history
 ```
 
 ## Troubleshooting
 
 **"Age key not found"**
-- Copy `age-key.txt` from your backup/password manager
+- No key in the SOPS default key file — see "Adding a machine"
 
 **"sops not installed"**
 - macOS: `brew install sops age`
 - Linux: See install.sh for manual installation
 
 **"Could not decrypt"**
-- Verify age-key.txt matches the public key in .sops.yaml
-- Check file wasn't corrupted
+- `age-keygen -y <key file>` must print a public key listed in `.sops.yaml`
+- A recipient added to `.sops.yaml` only applies after `sops updatekeys`
 
 ## Adding New Secret Types
 

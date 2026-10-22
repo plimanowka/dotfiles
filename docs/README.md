@@ -4,12 +4,12 @@ Automated macOS/Linux setup with modular zsh configuration, developer tools, and
 
 ## Quick Install (New Machine)
 
-**Step 1:** Save your `age-key.txt` from password manager to `~/age-key.txt` on the new machine.
+**Step 1:** Save an age key that can decrypt (the offline backup key, from 1Password/printout) to `~/age-key.txt` on the new machine. Afterwards give the machine its own key — see [SECRETS.md](SECRETS.md#adding-a-machine).
 
-**Step 2:** Run this (no git required - uses curl):
+**Step 2:** Run this (no git required - uses curl; macOS key path, on Linux use `~/.config/sops/age/`):
 
 ```bash
-curl -fsSL https://github.com/plimanowka/dotfiles/archive/refs/heads/main.tar.gz | tar -xz -C ~ && mv ~/dotfiles-main ~/.dotfiles && ~/.dotfiles/install.sh && mkdir -p ~/.dotfiles/secrets && mv ~/age-key.txt ~/.dotfiles/secrets/ && ~/.dotfiles/secrets/secrets-manager.sh export
+curl -fsSL https://github.com/plimanowka/dotfiles/archive/refs/heads/main.tar.gz | tar -xz -C ~ && mv ~/dotfiles-main ~/.dotfiles && ~/.dotfiles/install.sh && mkdir -p ~/Library/Application\ Support/sops/age && cat ~/age-key.txt >> ~/Library/Application\ Support/sops/age/keys.txt && rm ~/age-key.txt && ~/.dotfiles/secrets/secrets-manager.sh export
 ```
 
 **Step 3:** Initialize git repo (after install completes):
@@ -99,9 +99,8 @@ See `SECRETS.md` for details.
 │   ├── apt-packages.txt    # Debian/Ubuntu packages
 │   ├── dnf-packages.txt    # Fedora/RHEL packages
 │   └── install-tools.sh    # Tool installers (starship, micro, etc.)
+├── .sops.yaml          # SOPS recipients (age public keys)
 ├── secrets/            # Encrypted secrets (safe to commit)
-│   ├── .sops.yaml      # SOPS configuration
-│   ├── age-key.txt     # Master key (NEVER COMMIT!)
 │   ├── secrets-manager.sh
 │   └── *.enc*          # Encrypted files
 ├── docs/               # Documentation
