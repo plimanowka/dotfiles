@@ -314,17 +314,23 @@ fi
 # ============================================
 section "Secrets Management"
 
-if [[ -f "$DOTFILES_DIR/secrets/age-key.txt" ]]; then
-    success "Age key exists"
+# SOPS default identity file (same lookup as secrets-manager.sh)
+AGE_KEYS="${SOPS_AGE_KEY_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/sops/age/keys.txt}"
+if $IS_MACOS && [[ -z "${SOPS_AGE_KEY_FILE:-}${XDG_CONFIG_HOME:-}" ]]; then
+    AGE_KEYS="$HOME/Library/Application Support/sops/age/keys.txt"
+fi
+
+if [[ -f "$AGE_KEYS" ]]; then
+    success "Age key exists: $AGE_KEYS"
     if [[ -f "$DOTFILES_DIR/secrets/shell-secrets.enc.yaml" ]]; then
         info "Encrypted secrets found. Run to decrypt:"
         echo "  ~/.dotfiles/secrets/secrets-manager.sh export"
     fi
 else
-    warn "No age key found. To set up secrets:"
-    echo "  1. Generate key: age-keygen -o ~/.dotfiles/secrets/age-key.txt"
-    echo "  2. Import secrets: ~/.dotfiles/secrets/secrets-manager.sh import"
-    echo "  3. Or copy age-key.txt from backup/password manager"
+    warn "No age key found. To set up secrets (see docs/SECRETS.md):"
+    echo "  1. Generate this machine's key: mkdir -p \"$(dirname "$AGE_KEYS")\" && age-keygen -o \"$AGE_KEYS\""
+    echo "  2. Add its public key to .sops.yaml on a machine that can decrypt, run sops updatekeys, push"
+    echo "  3. Or, to decrypt right away, append the offline backup key to $AGE_KEYS"
 fi
 
 # Create secrets.sh template if needed
@@ -364,7 +370,7 @@ echo ""
 echo "Next steps:"
 echo "  1. Restart your terminal or run: source ~/.zshrc"
 echo "  2. Set up secrets:"
-echo "     - Copy age-key.txt from backup, OR"
+echo "     - Generate this machine's age key and add it as a recipient (docs/SECRETS.md), OR"
 echo "     - Run: ~/.dotfiles/secrets/secrets-manager.sh import"
 echo "  3. Install a Nerd Font: https://www.nerdfonts.com/"
 if $IS_MACOS; then

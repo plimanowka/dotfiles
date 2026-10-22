@@ -1,0 +1,12 @@
+# SOPS configuration
+# Recipients: shared key (until every machine has its own), company MacBook, offline backup.
+# Same recipient list as zamelduj. After changing recipients:
+#   for f in secrets/*.enc*; do sops updatekeys -y "$f"; done
+
+creation_rules:
+  # Match any file
+  - path_regex: .*
+    age: >-
+      age1lzu42skj9jmuk5a59muzz0qvgt9fyqfqu8395zu3j5fs3c2y6u3qhqxaem,
+      age1m99jpx6kvjflg3hp0aaga0l0sx73f5x0eks24myg2raur5ckkqlsg5qu3v,
+      age1quthx7p2ftwrgv8j8kmwpelg276zmg0jfmgpx0hhe7c9rjld793qcp39n9

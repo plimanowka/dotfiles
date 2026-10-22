@@ -4,8 +4,18 @@
 set -e
 
 SECRETS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AGE_KEY="$SECRETS_DIR/age-key.txt"
-SOPS_CONFIG="$SECRETS_DIR/.sops.yaml"
+SOPS_CONFIG="$(dirname "$SECRETS_DIR")/.sops.yaml"
+
+# Age identities live where sops looks by default (per-machine key, plus shared key during migration)
+if [[ -n "${SOPS_AGE_KEY_FILE:-}" ]]; then
+    AGE_KEY="$SOPS_AGE_KEY_FILE"
+elif [[ -n "${XDG_CONFIG_HOME:-}" ]]; then
+    AGE_KEY="$XDG_CONFIG_HOME/sops/age/keys.txt"
+elif [[ "$OSTYPE" == darwin* ]]; then
+    AGE_KEY="$HOME/Library/Application Support/sops/age/keys.txt"
+else
+    AGE_KEY="$HOME/.config/sops/age/keys.txt"
+fi
 
 # Colors
 RED='\033[0;31m'
@@ -48,9 +58,11 @@ Examples:
 
 Secrets are stored encrypted in: $SECRETS_DIR
 Age key location: $AGE_KEY
+Recipients:       $SOPS_CONFIG
 
-IMPORTANT: Keep age-key.txt safe! Without it, secrets cannot be decrypted.
-           Store a backup in a secure location (password manager, etc.)
+New machine: age-keygen -o "$AGE_KEY", add its public key to .sops.yaml
+on a machine that can decrypt, then: sops updatekeys -y secrets/<file> (each file)
+Lost all machine keys? Decrypt with the offline backup key.
 EOF
 }
 
