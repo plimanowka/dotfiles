@@ -1,67 +1,39 @@
 # Claude Code Multi-Account Setup
 
-Run Claude CLI with different accounts using long-lived OAuth tokens.
-Supports concurrent sessions — run `claude-personal` and `claude-loopme` in separate terminals simultaneously.
+Several Claude accounts in parallel, one `CLAUDE_CONFIG_DIR` per account (`shell/claude.sh`).
+All accounts share the same ways-of-working and project memory.
 
-## How It Works
-
-Each account gets a long-lived OAuth token (valid for 1 year) via `claude setup-token`.
-The wrapper functions set `CLAUDE_CODE_OAUTH_TOKEN` per-process, so no shared state conflicts.
+## Layout
 
 ```
-~/.claude-profiles/
-├── loopme-oauth      # LoopMe account token
-└── personal-oauth    # Personal account token
+~/.claude                Claude Desktop + plain `claude`; owns the shared ways-of-working
+                         (CLAUDE.md, rules, skills, commands, settings, plugins) and all
+                         project memory. Git repo, synced across machines by /wow-sync.
+~/.claude-<account>/     own login (keychain entry per dir), transcripts, .claude.json;
+                         shared items are symlinks back into ~/.claude
 ```
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `claude-loopme` | Launch Claude with LoopMe account |
-| `claude-personal` | Launch Claude with personal account |
-| `claude-save-token <name> <token>` | Save an OAuth token to a profile |
+| Command | Account |
+|---------|---------|
+| `claude-plimanowka` | plimanowka (gmail) |
+| `claude-zamelduj` | zamelduj |
+| `claude-loopme` | loopme (work) |
+| `claude` in `~/dev/loopme/**` | loopme, automatically |
+
+Each launcher re-links on start: new skills and new projects' memory show up in every account.
 
 ## First-Time Setup
 
-### 1. Generate personal token
+Run the launcher, then `/login` with that account; check with `/status`. The first session may ask
+to approve rules loaded from outside the project directory.
 
-```bash
-claude auth login          # authenticate with personal Google account
-claude setup-token         # authenticate again in browser, copies token
-# Copy the sk-ant-oat01-... token from the output
+## Gotchas
 
-claude-save-token personal sk-ant-oat01-...
-```
-
-### 2. Generate LoopMe token
-
-```bash
-claude auth logout
-claude auth login          # authenticate with LoopMe Google account
-claude setup-token         # authenticate again in browser
-# Copy the sk-ant-oat01-... token from the output
-
-claude-save-token loopme sk-ant-oat01-...
-```
-
-### 3. Use profiles
-
-```bash
-claude-personal            # Opens Claude with personal account
-claude-loopme              # Opens Claude with LoopMe account
-
-# Both can run simultaneously in different terminals!
-claude-personal --help
-claude-loopme /path/to/project
-```
-
-## Refreshing Tokens
-
-Tokens are valid for 1 year. When one expires:
-
-```bash
-claude auth login          # login with the right account
-claude setup-token         # generate a new token
-claude-save-token <profile> <new-token>
-```
+- Claude Desktop supports one account at a time; it always uses `~/.claude`.
+- A launcher warning "is a real file, not a link" means Claude replaced a shared file (usually
+  `settings.json`) in that account's dir: diff it with `~/.claude/...`, merge, delete, re-run.
+- "memory in both": the same project got memory under two accounts before linking; merge into
+  `~/.claude/projects/<dir>/memory`, delete the other, re-run.
+- New machine: see "New machine" in `~/.claude/skills/wow-sync/SKILL.md`.
