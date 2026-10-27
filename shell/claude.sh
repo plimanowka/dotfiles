@@ -1,93 +1,87 @@
-# Claude Code multi-account support
-# Uses long-lived OAuth tokens (from `claude setup-token`) with
-# CLAUDE_CODE_OAUTH_TOKEN env var. Each terminal gets its own token,
-# so concurrent sessions with different accounts work.
+# Claude Code multi-account support (one CLAUDE_CONFIG_DIR per account)
 #
-# Setup:
-#   1. claude auth login   (login as personal)
-#   2. claude setup-token  (copy the token)
-#   3. claude-save-token personal <token>
-#   4. claude auth logout && claude auth login  (login as loopme)
-#   5. claude setup-token  (copy the token)
-#   6. claude-save-token loopme <token>
-
-CLAUDE_PROFILES_DIR="$HOME/.claude-profiles"
-
-claude-save-token() {
-    local profile="$1"
-    local token="$2"
-
-    if [[ -z "$profile" || -z "$token" ]]; then
-        echo "Usage: claude-save-token <profile-name> <token>"
-        echo "Example: claude-save-token personal sk-ant-oat01-..."
-        return 1
-    fi
-
-    mkdir -p "$CLAUDE_PROFILES_DIR"
-    chmod 700 "$CLAUDE_PROFILES_DIR"
-
-    local token_file="$CLAUDE_PROFILES_DIR/${profile}-oauth"
-    printf '%s' "$token" > "$token_file"
-    chmod 600 "$token_file"
-    echo "Saved OAuth token for profile: $profile"
-}
-
-claude-personal() {
-    local token_file="$CLAUDE_PROFILES_DIR/personal-oauth"
-    if [[ ! -f "$token_file" ]]; then
-        echo "No personal token found. Run: claude-save-token personal <token>"
-        return 1
-    fi
-    CLAUDE_CODE_OAUTH_TOKEN="$(cat "$token_file")" CLAUDE_PROFILE="personal" claude "$@"
-}
-
-claude-loopme() {
-    local token_file="$CLAUDE_PROFILES_DIR/loopme-oauth"
-    if [[ ! -f "$token_file" ]]; then
-        echo "No loopme token found. Run: claude-save-token loopme <token>"
-        return 1
-    fi
-    CLAUDE_CODE_OAUTH_TOKEN="$(cat "$token_file")" CLAUDE_PROFILE="loopme" claude "$@"
-}
-
-# Local LiteLLM proxy exposing an Anthropic-compatible endpoint on
-# http://0.0.0.0:4000. It forwards the client's Authorization header straight
-# through to Anthropic, so callers (e.g. kpi-agent's local profile) send a
-# Claude OAuth token as the bearer and the proxy never stores a key itself.
+# ~/.claude         Claude Desktop + plain `claude` (whichever account is logged in
+#                   there). Owns the shared ways-of-working (CLAUDE.md, rules, skills,
+#                   commands, settings, plugins; git-tracked, see /wow-sync) and every
+#                   project's auto-memory.
+# ~/.claude-<name>  one per account: own login (keychain entry per dir), transcripts
+#                   and .claude.json; everything shared is symlinked back into
+#                   ~/.claude, so a lesson saved under one account is live in all.
 #
-#   claude-proxy            # run on default port 4000
-#   claude-proxy --port 8080
-#   claude-proxy --detailed_debug
-#
-# Extra args are passed straight to `litellm`.
-claude-proxy() {
-    local config="$HOME/.config/shell/litellm/claude-proxy-config.yaml"
+# Setup, once per account: run `claude-plimanowka` / `claude-zamelduj` /
+# `claude-loopme`, then /login in it.
+# Launchers re-link on every start (picks up new skills and new projects' memory).
 
-    if ! command -v litellm >/dev/null 2>&1; then
-        echo "litellm not found. Install with one of:"
-        echo "  uv tool install 'litellm[proxy]'"
-        echo "  pipx install 'litellm[proxy]'"
+CLAUDE_HOME="$HOME/.claude"
+CLAUDE_SHARED=(rules commands agents output-styles settings.json statusline-command.sh plugins)
+
+_claude-acct-link() {
+    local acct="$1" dir="$HOME/.claude-$1" item src p name
+    if [[ -z "$acct" ]]; then
+        echo "Usage: _claude-acct-link <account>   (links ~/.claude into ~/.claude-<account>)"
         return 1
     fi
+    mkdir -p "$dir/skills" "$dir/projects"
 
-    if [[ ! -f "$config" ]]; then
-        echo "Config not found: $config"
-        return 1
+    # Import, not symlink: Edit/Write refuse to write through a symlinked CLAUDE.md
+    [[ -e "$dir/CLAUDE.md" ]] || echo "@$CLAUDE_HOME/CLAUDE.md" > "$dir/CLAUDE.md"
+
+    for item in "${CLAUDE_SHARED[@]}"; do
+        src="$CLAUDE_HOME/$item"
+        [[ -e "$src" ]] || continue
+        if [[ -e "$dir/$item" && ! -L "$dir/$item" ]]; then
+            echo "claude-acct: $dir/$item is a real file, not a link (diverged? diff it with $src)" >&2
+            continue
+        fi
+        ln -sfn "$src" "$dir/$item"
+    done
+
+    # ponytail: per-skill links, a symlinked skills/ dir stops loading (claude-code#38051).
+    # skills/synced = claude.ai skills, each account syncs its own bucket.
+    for src in "$CLAUDE_HOME"/skills/*(N/); do
+        name="${src:t}"
+        [[ "$name" == synced || -e "$dir/skills/$name" || -L "$dir/skills/$name" ]] || ln -s "$src" "$dir/skills/$name"
+    done
+    for p in "$dir"/skills/*(N-@); do rm "$p"; done  # skill deleted from ~/.claude
+
+    # Memory a new project got under this account moves to ~/.claude, then gets linked back
+    for p in "$dir"/projects/*/memory(N/); do
+        name="${p:h:t}"
+        if [[ -e "$CLAUDE_HOME/projects/$name/memory" ]]; then
+            echo "claude-acct: $name has memory in both $dir and $CLAUDE_HOME, merge by hand" >&2
+        else
+            mkdir -p "$CLAUDE_HOME/projects/$name" && mv "$p" "$CLAUDE_HOME/projects/$name/memory"
+        fi
+    done
+    for p in "$CLAUDE_HOME"/projects/*/memory(N); do
+        name="${p:h:t}"
+        [[ -e "$dir/projects/$name/memory" || -L "$dir/projects/$name/memory" ]] && continue
+        mkdir -p "$dir/projects/$name" && ln -s "$p" "$dir/projects/$name/memory"
+    done
+
+    # User-scope MCP servers live in .claude.json (per account): seed once, after /login
+    if [[ -f "$dir/.claude.json" ]] && ! jq -e '.mcpServers | length > 0' "$dir/.claude.json" >/dev/null; then
+        jq --argjson m "$(jq '.mcpServers // {}' "$HOME/.claude.json")" '.mcpServers = $m' \
+            "$dir/.claude.json" > "$dir/.claude.json.tmp" && mv "$dir/.claude.json.tmp" "$dir/.claude.json"
     fi
-
-    litellm --config "$config" "$@"
 }
 
-# Export the loopme Claude OAuth token into the current shell as
-# ANTHROPIC_OAUTH_TOKEN, so callers that read it (e.g. kpi-agent's local
-# profile -> claude-proxy) pick it up without copy-pasting the token.
-#   claude-as-loopme        # sets ANTHROPIC_OAUTH_TOKEN for this shell
-claude-as-loopme() {
-    local token_file="$CLAUDE_PROFILES_DIR/loopme-oauth"
-    if [[ ! -f "$token_file" ]]; then
-        echo "No loopme token found. Run: claude-save-token loopme <token>"
-        return 1
+# _claude-acct <account> [claude args...]
+_claude-acct() {
+    local acct="$1"
+    _claude-acct-link "$acct" || return
+    shift
+    CLAUDE_CONFIG_DIR="$HOME/.claude-$acct" command claude "$@"
+}
+claude-plimanowka() { _claude-acct plimanowka "$@"; }
+claude-zamelduj()   { _claude-acct zamelduj "$@"; }
+claude-loopme()     { _claude-acct loopme "$@"; }
+
+# Company code always runs on the company account, even as plain `claude`
+claude() {
+    if [[ -z "$CLAUDE_CONFIG_DIR" && "$PWD/" == "$HOME/dev/loopme/"* ]]; then
+        claude-loopme "$@"
+    else
+        command claude "$@"
     fi
-    export ANTHROPIC_OAUTH_TOKEN="$(cat "$token_file")"
-    echo "ANTHROPIC_OAUTH_TOKEN set from loopme profile."
 }

@@ -38,6 +38,6 @@ cel=${1:?Podaj katalog docelowy, np. /Volumes/USB}
 command -v age >/dev/null || { echo "brak age: brew install age" >&2; exit 1; }
 plik="$cel/mac-$(date +%Y%m%d-%H%M).tar.age"
 echo "Pakuję ${#istnieje[@]} pozycji do $plik — podaj hasło (zapisz je w 1Password):"
-tar -cf - --exclude='.DS_Store' --exclude='__pycache__' "${istnieje[@]}" | age -p -o "$plik"
+tar -cf - --exclude='.claude/projects/-Users-pawellimanowka-dev-loopme*' --exclude='.DS_Store' --exclude='__pycache__' "${istnieje[@]}" | age -p -o "$plik"
 ls -lh "$plik"
 echo "Sprawdzenie: age -d \"$plik\" | tar -tf - | head"

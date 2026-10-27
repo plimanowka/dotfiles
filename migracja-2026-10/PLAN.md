@@ -130,6 +130,14 @@ mają przełącznik „Connect new sessions to Remote Control” jak na Macu (Li
 
 ## 6. Skille i zasady pracy
 
+✅ **Decyzja 27.10:** konta równolegle przez `CLAUDE_CONFIG_DIR` — `claude-plimanowka`, `claude-zamelduj`,
+`claude-loopme` (`dotfiles/shell/claude.sh`); `~/.claude` = Claude Desktop (docelowo konto plimanowka). Konta na
+jednej maszynie dzielą reguły, skille, ustawienia, wtyczki i pamięć projektów przez dowiązania do `~/.claude`.
+Między maszynami: `~/.claude` jest repo git (allowlista w `.gitignore`) → prywatne `plimanowka/claude-wow`, skill
+`/wow-sync` (wybór, co udostępnić + promowanie lekcji z pamięci do reguł). Reguły z pracy mogą płynąć do repo
+prywatnego (Paweł: akceptowalne). Na Linuksie: po `z-usb.sh` krok „New machine” z `~/.claude/skills/wow-sync/SKILL.md`.
+`na-usb.sh` pomija `.claude/projects/-Users-pawellimanowka-dev-loopme*` (dane firmowe zostają na Macu).
+
 Globalne: `~/.claude/CLAUDE.md`, `~/.claude/rules/`, `~/.claude/skills/`, `~/.claude/commands/`, `settings.json`
 (przenosi `na-usb.sh`). Projektowe (`.claude/skills`, `CLAUDE.md` w repo) przychodzą z gitem. Wtyczki z marketplace
 — zainstalować od nowa (`/plugin`), zsynchronizowane z konta pobiorą się same ([claude-directory](https://code.claude.com/docs/en/claude-directory)).
