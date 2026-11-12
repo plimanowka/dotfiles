@@ -10,6 +10,7 @@ jq
 tree
 htop
 fzf
+thefuck
 parallel
 zsh-syntax-highlighting
 unzip
