@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# rdp-stacjonarny — remote GNOME session on the home Linux box (GNOME Remote Login) via FreeRDP.
+#
+# Why FreeRDP, not Microsoft Windows App: GNOME Remote Login hands the connection over to the
+# login screen with one-time credentials (server redirection); Windows App for macOS re-sends the
+# user's password instead and fails ("Credentials did not work", MIC verification failed in the
+# box journal). FreeRDP follows the redirection.
+#
+# Keys: Toshy on the box only remaps physical keyboards, RDP input bypasses it. So the Mac side
+# does the swap: Cmd -> Ctrl (copy/paste/save as on Linux), Ctrl -> Super (Ctrl+Left/Right then
+# arrives as Super+Left/Right, which the box binds to workspace switching). Option stays Alt.
+# Leave the session full screen with Ctrl+Alt+Enter.
+#
+# Password: macOS Keychain, item "stacjonarny-rdp" (add once:
+#   security add-generic-password -a pawel -s stacjonarny-rdp -w
+# ). Fed on stdin so it never shows up in `ps`.
+set -euo pipefail
+
+HOST="${RDP_HOST:-stacjonarny.local}"
+USER_NAME="${RDP_USER:-pawel}"
+SCALE="${RDP_SCALE:-200}"   # 200 for Retina / 4K, 100 for a 1080p screen
+
+command -v sdl-freerdp >/dev/null || { echo "brak sdl-freerdp: brew install freerdp" >&2; exit 1; }
+
+args=(/v:"$HOST" /u:"$USER_NAME" /cert:tofu /f /gfx:AVC444 +clipboard /scale-desktop:"$SCALE"
+      /kbd:remap:0x015b=0x001d,remap:0x015c=0x011d,remap:0x001d=0x015b,remap:0x011d=0x015c)
+
+if pass=$(security find-generic-password -a "$USER_NAME" -s stacjonarny-rdp -w 2>/dev/null); then
+    printf '%s\n' "$pass" | exec sdl-freerdp "${args[@]}" /from-stdin "$@"
+else
+    echo "brak hasła w Pęku kluczy (security add-generic-password -a $USER_NAME -s stacjonarny-rdp -w) — pytam ręcznie" >&2
+    exec sdl-freerdp "${args[@]}" "$@"
+fi
