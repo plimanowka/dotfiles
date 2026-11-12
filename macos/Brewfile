@@ -74,6 +74,7 @@ cask "drawio"                   # Diagramming tool
 cask "karabiner-elements"       # Keyboard customizer
 cask "google-cloud-sdk"         # Google Cloud CLI & tools
 cask "zerotier-one"             # Virtual networking / VPN
+cask "windows-app"              # RDP client (remote desktop to the Linux box)
 cask "mac-mouse-fix"            # Mouse enhancement
 cask "shotcut"                  # Video editor
 cask "wireshark"                # Network analyzer
