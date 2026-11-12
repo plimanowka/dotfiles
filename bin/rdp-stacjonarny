@@ -9,7 +9,11 @@
 # Keys: Toshy on the box only remaps physical keyboards, RDP input bypasses it. So the Mac side
 # does the swap: Cmd -> Ctrl (copy/paste/save as on Linux), Ctrl -> Super (Ctrl+Left/Right then
 # arrives as Super+Left/Right, which the box binds to workspace switching). Option stays Alt.
-# Leave the session full screen with Ctrl+Alt+Enter.
+# Window, not full screen: +dynamic-resolution makes it resizable/maximizable and re-sends the
+# resolution on resize and when the window moves to another display; the scale follows that
+# display (Retina 200 %, plain monitor 100 %) because no /scale-desktop override is given.
+# FreeRDP hotkeys use RIGHT Shift: RShift+Enter full screen on/off, RShift+R resizable,
+# RShift+G release keyboard grab, RShift+D disconnect, RShift+M minimize.
 #
 # Password: macOS Keychain, item "stacjonarny-rdp" (add once:
 #   security add-generic-password -a pawel -s stacjonarny-rdp -w
@@ -18,11 +22,10 @@ set -euo pipefail
 
 HOST="${RDP_HOST:-stacjonarny.local}"
 USER_NAME="${RDP_USER:-pawel}"
-SCALE="${RDP_SCALE:-200}"   # 200 for Retina / 4K, 100 for a 1080p screen
 
 command -v sdl-freerdp >/dev/null || { echo "brak sdl-freerdp: brew install freerdp" >&2; exit 1; }
 
-args=(/v:"$HOST" /u:"$USER_NAME" /cert:tofu /f /gfx:AVC444 +clipboard /scale-desktop:"$SCALE"
+args=(/v:"$HOST" /u:"$USER_NAME" /cert:tofu +dynamic-resolution /size:90% /gfx:AVC444 +clipboard
       /kbd:remap:347=29,remap:348=285,remap:29=347,remap:285=348)
 # RDP scancodes in decimal: 347=LWin 348=RWin 29=LCtrl 285=RCtrl (sdl-freerdp /list:kbd-scancode).
 # FreeRDP 3 rejects remap entries longer than 10 chars (cmdline.c check_kbd_remap_valid), so no 0x015b=0x001d.
