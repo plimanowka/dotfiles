@@ -23,7 +23,9 @@ SCALE="${RDP_SCALE:-200}"   # 200 for Retina / 4K, 100 for a 1080p screen
 command -v sdl-freerdp >/dev/null || { echo "brak sdl-freerdp: brew install freerdp" >&2; exit 1; }
 
 args=(/v:"$HOST" /u:"$USER_NAME" /cert:tofu /f /gfx:AVC444 +clipboard /scale-desktop:"$SCALE"
-      /kbd:remap:0x015b=0x001d,remap:0x015c=0x011d,remap:0x001d=0x015b,remap:0x011d=0x015c)
+      /kbd:remap:347=29,remap:348=285,remap:29=347,remap:285=348)
+# RDP scancodes in decimal: 347=LWin 348=RWin 29=LCtrl 285=RCtrl (sdl-freerdp /list:kbd-scancode).
+# FreeRDP 3 rejects remap entries longer than 10 chars (cmdline.c check_kbd_remap_valid), so no 0x015b=0x001d.
 
 if pass=$(security find-generic-password -a "$USER_NAME" -s stacjonarny-rdp -w 2>/dev/null); then
     printf '%s\n' "$pass" | exec sdl-freerdp "${args[@]}" /from-stdin "$@"
