@@ -41,7 +41,7 @@ _k8_load_clusters() {
 }
 
 # Load clusters on source
-_k8_load_clusters
+[[ -f "$_K8_CLUSTERS_CONFIG" ]] && _k8_load_clusters  # quiet at shell start when the config is absent (new machine)
 
 # Reload clusters from config (useful after editing config)
 k8dcs-reload() {
