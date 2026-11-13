@@ -35,6 +35,11 @@ if [[ "${1:-}" == "--app" ]]; then
     rm -rf "$app"
     # `do shell script` gets a bare PATH; add Homebrew so sdl-freerdp is found.
     osacompile -o "$app" -e "do shell script \"export PATH=/opt/homebrew/bin:/usr/local/bin:\$PATH; '$self' >/dev/null 2>&1\""
+    # macOS Local Network privacy: FreeRDP started from this app is attributed to the app, and
+    # without a usage string macOS silently blocks LAN connects (terminal launches work).
+    plutil -insert NSLocalNetworkUsageDescription -string "Połączenie zdalnego pulpitu z komputerem w sieci domowej." "$app/Contents/Info.plist"
+    plutil -replace CFBundleIdentifier -string "pl.plimanowka.rdp-stacjonarny" "$app/Contents/Info.plist"
+    codesign --force --sign - "$app" 2>/dev/null
     echo "gotowe: $app"
     exit 0
 fi
