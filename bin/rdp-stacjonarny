@@ -17,9 +17,6 @@
 # FreeRDP hotkeys use RIGHT Shift: RShift+Enter full screen on/off, RShift+R resizable,
 # RShift+G release keyboard grab, RShift+D disconnect, RShift+M minimize.
 #
-# /ipv4: after a network drop mDNS also returns the link-local IPv6 address, which FreeRDP
-# fails on ("Couldn't get socket ip address"); prefer the A record.
-#
 # Sound: /sound plays the box audio on the Mac (rdpsnd, macOS backend built into Homebrew freerdp).
 #
 # Password: macOS Keychain, item "stacjonarny-rdp" (add once:
@@ -44,7 +41,10 @@ fi
 
 command -v sdl-freerdp >/dev/null || { echo "brak sdl-freerdp: brew install freerdp" >&2; exit 1; }
 
-args=(/v:"$HOST" /ipv4 /u:"$USER_NAME" /cert:tofu +dynamic-resolution /size:90% /gfx:AVC444 +clipboard /sound
+# Resolve the IPv4 address ourselves: /ipv4 alone did not help, FreeRDP still failed on the name.
+ADDR=$(python3 -I -c 'import socket,sys; print(socket.getaddrinfo(sys.argv[1], 3389, socket.AF_INET, socket.SOCK_STREAM)[0][4][0])' "$HOST" 2>/dev/null || echo "$HOST")
+
+args=(/v:"$ADDR" /u:"$USER_NAME" /cert:tofu +dynamic-resolution /size:90% /gfx:AVC444 +clipboard /sound
       /kbd:remap:347=29)
 # RDP scancodes in decimal: 347=LWin 29=LCtrl (sdl-freerdp /list:kbd-scancode).
 # FreeRDP 3 rejects remap entries longer than 10 chars (cmdline.c check_kbd_remap_valid), so no 0x015b=0x001d.
