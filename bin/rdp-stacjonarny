@@ -42,18 +42,19 @@ fi
 command -v sdl-freerdp >/dev/null || { echo "brak sdl-freerdp: brew install freerdp" >&2; exit 1; }
 
 # Resolve the IPv4 address ourselves: /ipv4 alone did not help, FreeRDP still failed on the name.
-ADDR=$(python3 -I -c 'import socket,sys; print(socket.getaddrinfo(sys.argv[1], 3389, socket.AF_INET, socket.SOCK_STREAM)[0][4][0])' "$HOST" 2>/dev/null || echo "$HOST")
+LOG="$HOME/Library/Logs/rdp-stacjonarny.log"
+ADDR=$(python3 -I -c 'import socket,sys; print(socket.getaddrinfo(sys.argv[1], 3389, socket.AF_INET, socket.SOCK_STREAM)[0][4][0])' "$HOST" 2>>"$LOG" || echo "$HOST")
+[[ -t 1 ]] && how=terminal || how=app
+echo "=== $(date '+%F %T') start ($how) host=$HOST addr=$ADDR python3=$(command -v python3)" >>"$LOG"
 
 args=(/v:"$ADDR" /u:"$USER_NAME" /cert:tofu +dynamic-resolution /size:90% /gfx:AVC444 +clipboard /sound
       /kbd:remap:347=29)
 # RDP scancodes in decimal: 347=LWin 29=LCtrl (sdl-freerdp /list:kbd-scancode).
 # FreeRDP 3 rejects remap entries longer than 10 chars (cmdline.c check_kbd_remap_valid), so no 0x015b=0x001d.
 
-LOG="$HOME/Library/Logs/rdp-stacjonarny.log"
-
 if pass=$(security find-generic-password -a "$USER_NAME" -s stacjonarny-rdp -w 2>/dev/null); then
     # Detached: the terminal stays free and closing it does not drop the session.
-    printf '%s\n' "$pass" | nohup sdl-freerdp "${args[@]}" /from-stdin "$@" >"$LOG" 2>&1 &
+    printf '%s\n' "$pass" | nohup sdl-freerdp "${args[@]}" /from-stdin "$@" >>"$LOG" 2>&1 &
     echo "FreeRDP w tle, log: $LOG"
 else
     # No stored password: stay in the foreground, FreeRDP asks for it in this terminal.
