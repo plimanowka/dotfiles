@@ -15,6 +15,8 @@
 # FreeRDP hotkeys use RIGHT Shift: RShift+Enter full screen on/off, RShift+R resizable,
 # RShift+G release keyboard grab, RShift+D disconnect, RShift+M minimize.
 #
+# Sound: /sound plays the box audio on the Mac (rdpsnd, macOS backend built into Homebrew freerdp).
+#
 # Password: macOS Keychain, item "stacjonarny-rdp" (add once:
 #   security add-generic-password -a pawel -s stacjonarny-rdp -w
 # ). Fed on stdin so it never shows up in `ps`.
@@ -37,7 +39,7 @@ fi
 
 command -v sdl-freerdp >/dev/null || { echo "brak sdl-freerdp: brew install freerdp" >&2; exit 1; }
 
-args=(/v:"$HOST" /u:"$USER_NAME" /cert:tofu +dynamic-resolution /size:90% /gfx:AVC444 +clipboard
+args=(/v:"$HOST" /u:"$USER_NAME" /cert:tofu +dynamic-resolution /size:90% /gfx:AVC444 +clipboard /sound
       /kbd:remap:347=29,remap:348=285,remap:29=347,remap:285=348)
 # RDP scancodes in decimal: 347=LWin 348=RWin 29=LCtrl 285=RCtrl (sdl-freerdp /list:kbd-scancode).
 # FreeRDP 3 rejects remap entries longer than 10 chars (cmdline.c check_kbd_remap_valid), so no 0x015b=0x001d.
