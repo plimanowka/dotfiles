@@ -23,6 +23,18 @@ set -euo pipefail
 HOST="${RDP_HOST:-stacjonarny.local}"
 USER_NAME="${RDP_USER:-pawel}"
 
+# --app: build ~/Applications/RDP Stacjonarny.app (Spotlight, Launchpad, Dock) that runs this script.
+if [[ "${1:-}" == "--app" ]]; then
+    self="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+    app="$HOME/Applications/RDP Stacjonarny.app"
+    mkdir -p "$HOME/Applications"
+    rm -rf "$app"
+    # `do shell script` gets a bare PATH; add Homebrew so sdl-freerdp is found.
+    osacompile -o "$app" -e "do shell script \"export PATH=/opt/homebrew/bin:/usr/local/bin:\$PATH; '$self' >/dev/null 2>&1\""
+    echo "gotowe: $app"
+    exit 0
+fi
+
 command -v sdl-freerdp >/dev/null || { echo "brak sdl-freerdp: brew install freerdp" >&2; exit 1; }
 
 args=(/v:"$HOST" /u:"$USER_NAME" /cert:tofu +dynamic-resolution /size:90% /gfx:AVC444 +clipboard
@@ -30,9 +42,14 @@ args=(/v:"$HOST" /u:"$USER_NAME" /cert:tofu +dynamic-resolution /size:90% /gfx:A
 # RDP scancodes in decimal: 347=LWin 348=RWin 29=LCtrl 285=RCtrl (sdl-freerdp /list:kbd-scancode).
 # FreeRDP 3 rejects remap entries longer than 10 chars (cmdline.c check_kbd_remap_valid), so no 0x015b=0x001d.
 
+LOG="$HOME/Library/Logs/rdp-stacjonarny.log"
+
 if pass=$(security find-generic-password -a "$USER_NAME" -s stacjonarny-rdp -w 2>/dev/null); then
-    printf '%s\n' "$pass" | exec sdl-freerdp "${args[@]}" /from-stdin "$@"
+    # Detached: the terminal stays free and closing it does not drop the session.
+    printf '%s\n' "$pass" | nohup sdl-freerdp "${args[@]}" /from-stdin "$@" >"$LOG" 2>&1 &
+    echo "FreeRDP w tle, log: $LOG"
 else
+    # No stored password: stay in the foreground, FreeRDP asks for it in this terminal.
     echo "brak hasła w Pęku kluczy (security add-generic-password -a $USER_NAME -s stacjonarny-rdp -w) — pytam ręcznie" >&2
     exec sdl-freerdp "${args[@]}" "$@"
 fi
