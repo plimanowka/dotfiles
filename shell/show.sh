@@ -116,7 +116,8 @@ EOF
   # Route visual formats to a GUI previewer when forced (-I) or when running in
   # the IntelliJ terminal (JediTerm can't render inline images/PDFs). Markdown
   # and HTML only route under -I; otherwise they fall through to inline rendering.
-  if [[ -n "$force_ide" || "$TERMINAL_EMULATOR" == "JetBrains-JediTerm" ]]; then
+  # Also when imgcat is missing (Linux terminals such as Ptyxis): open the desktop viewer.
+  if [[ -n "$force_ide" || "$TERMINAL_EMULATOR" == "JetBrains-JediTerm" ]] || ! (( $+commands[imgcat] )); then
     _show_gui "$file" "$ext" "$force_ide" && return
   fi
 
@@ -145,17 +146,23 @@ EOF
 # falls back to terminal rendering. $3 (forced) is set when -I was passed.
 _show_gui() {
   local file="$1" ext="$2" forced="$3"
+  local opener=open                     # macOS; Linux desktop viewer via xdg-open
+  [[ "$OSTYPE" == linux* ]] && opener=xdg-open
   case "$ext" in
     jpg|jpeg|png|gif|bmp|tiff|webp|svg|image)
-      idea "$file" ;;                   # IntelliJ image viewer (renders SVG too)
+      if (( $+commands[idea] )) && [[ -n "$forced" || "$TERMINAL_EMULATOR" == "JetBrains-JediTerm" ]]; then
+        idea "$file"                    # IntelliJ image viewer (renders SVG too)
+      else
+        $opener "$file"
+      fi ;;
     pdf)
-      open "$file" ;;                   # Preview.app
+      $opener "$file" ;;                # Preview.app / GNOME Papers
     md|markdown)
       [[ -n "$forced" ]] || return 2    # auto: keep inline glow; only -I → IDE
       idea "$file" ;;                   # IntelliJ markdown preview
     html|htm)
       [[ -n "$forced" ]] || return 2    # auto: keep bat source; only -I → browser
-      open "$file" ;;
+      $opener "$file" ;;
     *)
       return 2 ;;
   esac
