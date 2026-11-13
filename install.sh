@@ -294,6 +294,8 @@ if $IS_MACOS; then
             success "Karabiner config installed"
         fi
     fi
+
+    "$DOTFILES_DIR/bin/rdp-stacjonarny" --app >/dev/null && success "RDP Stacjonarny.app installed (~/Applications)"
 fi
 
 # ============================================
