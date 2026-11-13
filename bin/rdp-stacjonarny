@@ -7,8 +7,10 @@
 # box journal). FreeRDP follows the redirection.
 #
 # Keys: Toshy on the box only remaps physical keyboards, RDP input bypasses it. So the Mac side
-# does the swap: Cmd -> Ctrl (copy/paste/save as on Linux), Ctrl -> Super (Ctrl+Left/Right then
-# arrives as Super+Left/Right, which the box binds to workspace switching). Option stays Alt.
+# maps left Cmd -> Ctrl (copy/paste/save as on Linux). Ctrl stays Ctrl (terminal/TUI keys: Ctrl+C,
+# Ctrl+R, Ctrl+Q), right Cmd stays Super (GNOME overview), Option stays Alt. Workspace switching and
+# Option word moves come from the FreeRDP-only Karabiner rule (macos/karabiner.json), because macOS
+# keeps Ctrl+arrows for its own Spaces.
 # Window, not full screen: +dynamic-resolution makes it resizable/maximizable and re-sends the
 # resolution on resize and when the window moves to another display; the scale follows that
 # display (Retina 200 %, plain monitor 100 %) because no /scale-desktop override is given.
@@ -40,8 +42,8 @@ fi
 command -v sdl-freerdp >/dev/null || { echo "brak sdl-freerdp: brew install freerdp" >&2; exit 1; }
 
 args=(/v:"$HOST" /u:"$USER_NAME" /cert:tofu +dynamic-resolution /size:90% /gfx:AVC444 +clipboard /sound
-      /kbd:remap:347=29,remap:348=285,remap:29=347,remap:285=348)
-# RDP scancodes in decimal: 347=LWin 348=RWin 29=LCtrl 285=RCtrl (sdl-freerdp /list:kbd-scancode).
+      /kbd:remap:347=29)
+# RDP scancodes in decimal: 347=LWin 29=LCtrl (sdl-freerdp /list:kbd-scancode).
 # FreeRDP 3 rejects remap entries longer than 10 chars (cmdline.c check_kbd_remap_valid), so no 0x015b=0x001d.
 
 LOG="$HOME/Library/Logs/rdp-stacjonarny.log"
