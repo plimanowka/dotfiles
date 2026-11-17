@@ -14,7 +14,10 @@ elif [[ $arch == *.age ]]; then age -d "$arch" | tar -xf - -C "$POCZ"; else tar 
 for p in .claude .claude-zamelduj .claude-plimanowka .local/share/claude-skrzynka .ssh .gitconfig .config .aws dev/tasks dev/tmp dev/wachata-media dev/presentations \
          dev/plimanowka/experiments dev/plimanowka/vms; do
   [ -e "$POCZ/$p" ] || continue
-  mkdir -p "$(dirname "$p")"; cp -a "$POCZ/$p" "$(dirname "$p")/" && rm -rf "${POCZ:?}/$p"
+  # .config bez nadpisywania: gh na Linuksie trzyma ważny token z `gh auth login` na boksie, z Maca przychodzi
+  # hosts.yml z tokenem z pęku kluczy — nieważnym (17.11 nadpisał działające logowanie)
+  if [ "$p" = .config ]; then o=-an; else o=-a; fi
+  mkdir -p "$(dirname "$p")"; cp $o "$POCZ/$p" "$(dirname "$p")/" && rm -rf "${POCZ:?}/$p"
 done
 
 # Luźne pliki z ~/dev/plimanowka (poza repozytoriami) — od razu na miejsce; podkatalogi repo czekają na odtworz-repo.sh.
