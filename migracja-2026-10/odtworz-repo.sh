@@ -6,28 +6,18 @@ set -euo pipefail
 mkdir -p "$HOME/dev/plimanowka" && cd "$HOME/dev/plimanowka"
 GH=git@github.com-plimanowka:plimanowka
 
-for r in zamelduj plimanowka-home dotfiles eagle-ai claude-homeassistant wilkowisko-hub wilkowisko-siec; do
+for r in zamelduj plimanowka-home dotfiles eagle-ai claude-homeassistant wilkowisko-hub wilkowisko-siec pinandfix; do
   [ -d "$r" ] || git clone "$GH/$r.git" "$r"
 done
 
-# Katalogi stałych sesji zamelduj: katalog → gałąź (docs/sesje-rownolegle.md, tabela „Kto gdzie”)
-cd zamelduj
-while read -r dir br; do
-  [ -d "../$dir" ] && continue
-  git fetch -q origin "$br" 2>/dev/null && git worktree add "../$dir" "$br" || git worktree add -b "$br" "../$dir" origin/main
-done <<'EOF'
-zamelduj-ads ads
-zamelduj-landing blog
-zamelduj-inv inv
-zamelduj-klienci klienci
-zamelduj-agenci agenci-maska-notatek
-zamelduj-pawel pawel
-EOF
-git worktree list
+# Katalogi obszarów zamelduj (zamelduj-ads, -klienci, -pawel…) NIE są zakładane tutaj — zakłada je skill `obszar`
+# przy pierwszej sesji danego obszaru (docs/obszary.md, od 17.11), razem z dowiązaniem pamięci i sekretów.
 
 # Sekrety lokalne z poczekalni z-usb.sh (.env.local, terraform.tfvars, secrets.yaml) — na swoje miejsca, bez nadpisywania
 POCZ="$HOME/.migracja-usb/dev/plimanowka"
 if [ -d "$POCZ" ]; then
-  cp -rn "$POCZ"/. "$HOME/dev/plimanowka/" && find "$POCZ" -type f | sed "s#$POCZ#  ~/dev/plimanowka#"
+  # tylko do sklonowanych repozytoriów; sekrety starych worktree (zamelduj-p119-* itp.) to kopie z głównego checkoutu
+  for d in "$POCZ"/*/; do r=$(basename "$d"); [ -d "$HOME/dev/plimanowka/$r/.git" ] || continue
+    cp -rn "$d". "$HOME/dev/plimanowka/$r/" && find "$d" -type f | sed "s#$POCZ#  ~/dev/plimanowka#"; done
   echo "Sekrety skopiowane. Poczekalnię ~/.migracja-usb skasuj ręcznie, gdy wszystko działa."
 fi
