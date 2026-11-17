@@ -29,7 +29,7 @@ fi
 # 1) Katalogi projektów Claude mają w nazwie ścieżkę z kreskami zamiast „/”: -Users-pawellimanowka-… → -home-<user>-…
 nowy=$(printf '%s' "$HOME" | sed 's#[^A-Za-z0-9]#-#g')
 for k in .claude .claude-zamelduj .claude-plimanowka; do
-  for d in "$k"/projects/-Users-pawellimanowka-*; do
+  for d in "$k"/projects/-Users-pawellimanowka "$k"/projects/-Users-pawellimanowka-*; do
     [ -e "$d" ] || [ -L "$d" ] || continue
     cel="$k/projects/${nowy}${d#"$k"/projects/-Users-pawellimanowka}"
     if [ -e "$cel" ]; then cp -rn "$d"/. "$cel"/ && rm -rf "$d"; else mv "$d" "$cel"; fi
@@ -37,13 +37,14 @@ for k in .claude .claude-zamelduj .claude-plimanowka; do
 done
 # 1b) Dowiązania z bezwzględną ścieżką Maca — w ~/.claude-zamelduj (wspólne reguły, skille, pamięć) i w ~/.claude/projects
 #     (pamięć katalogów obszarów → pamięć głównego checkoutu, 17.11) — przestawić cel na nowy $HOME i nowe nazwy.
-find .claude-zamelduj .claude-plimanowka .claude/projects -type l 2>/dev/null | while IFS= read -r l; do
+{ find .claude-zamelduj .claude-plimanowka .claude/projects -type l 2>/dev/null || true; } | while IFS= read -r l; do
   t=$(readlink "$l"); n=$(printf '%s' "$t" | sed "s#-Users-pawellimanowka#$nowy#g; s#$STARY#$HOME#g")
   [ "$t" = "$n" ] || ln -sfn "$n" "$l"
 done
 
 # 2) Ścieżki zapisane w ustawieniach i zadaniach cyklicznych
-grep -rl "$STARY" .claude/settings.json .claude/settings.local.json .claude/scheduled-tasks .claude/statusline-command.sh .claude-zamelduj/CLAUDE.md 2>/dev/null \
+# (grep zwraca 2, gdy któregoś pliku brak — z pipefail to przerywało skrypt przed krokiem 3, 17.11)
+{ grep -rl "$STARY" .claude/settings.json .claude/settings.local.json .claude/scheduled-tasks .claude/statusline-command.sh .claude-zamelduj/CLAUDE.md 2>/dev/null || true; } \
   | xargs -r sed -i "s#$STARY#$HOME#g"
 
 # 3) Uprawnienia sekretów
