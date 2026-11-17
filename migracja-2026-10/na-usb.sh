@@ -5,6 +5,9 @@
 #   bash na-usb.sh --rozmiar                          policz, ile zajmie (nic nie pakuje)
 #   bash na-usb.sh stacjonarny:/mnt/data/przeprowadzka-2026-11   spakuj prosto na boks (tar przez ssh)
 #   bash na-usb.sh /Volumes/USB                       spakuj na pendrive
+#   bash na-usb.sh --rsync stacjonarny:/mnt/data/przeprowadzka-2026-11/mac
+#                                                     kopia przyrostowa (rsync -R, ścieżki względem $HOME); można puszczać
+#                                                     wielokrotnie — pierwszy raz hurtem, w dniu X tylko różnice (17.11)
 # Wymaga: tar (i ssh dla wariantu host:katalog). Lista niżej — dopisz/usuń, zanim uruchomisz.
 set -euo pipefail
 cd "$HOME"
@@ -43,10 +46,18 @@ istnieje=(); for p in "${LISTA[@]}"; do [ -e "$p" ] && istnieje+=("$p"); done
 if [ "${1:-}" = "--rozmiar" ]; then
   du -shc "${istnieje[@]}" 2>/dev/null | sort -h | tail -15; exit 0
 fi
+if [ "${1:-}" = "--rsync" ]; then
+  cel=${2:?Podaj host:katalog}
+  ssh "${cel%%:*}" "mkdir -p '${cel#*:}'"
+  rsync -aR --delete --exclude='.claude/projects/-Users-pawellimanowka-dev-loopme*' --exclude='.claude-zamelduj/projects/-Users-pawellimanowka-dev-loopme*' \
+    --exclude='.claude-plimanowka/projects/-Users-pawellimanowka-dev-loopme*' --exclude='.DS_Store' --exclude='__pycache__' --exclude='.ssh/id_ed25519_loopme*' \
+    "${istnieje[@]}" "$cel/"
+  echo "Gotowe: $cel (na boksie: bash z-usb.sh ${cel#*:})"; exit 0
+fi
 cel=${1:?Podaj cel: host:katalog albo katalog (np. /Volumes/USB)}
 nazwa="mac-$(date +%Y%m%d-%H%M).tar"
 pakuj() { tar -cf - --exclude='.claude/projects/-Users-pawellimanowka-dev-loopme*' --exclude='.claude-zamelduj/projects/-Users-pawellimanowka-dev-loopme*' \
-  --exclude='.claude-plimanowka/projects/-Users-pawellimanowka-dev-loopme*' --exclude='.DS_Store' --exclude='__pycache__' "${istnieje[@]}"; }
+  --exclude='.claude-plimanowka/projects/-Users-pawellimanowka-dev-loopme*' --exclude='.DS_Store' --exclude='__pycache__' --exclude='.ssh/id_ed25519_loopme*' "${istnieje[@]}"; }
 if [[ $cel == *:* ]]; then
   host=${cel%%:*} kat=${cel#*:}
   echo "Pakuję ${#istnieje[@]} pozycji na $host:$kat/$nazwa (przez ssh)…"

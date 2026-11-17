@@ -4,7 +4,7 @@
 #   bash odtworz-repo.sh
 set -euo pipefail
 mkdir -p "$HOME/dev/plimanowka" && cd "$HOME/dev/plimanowka"
-GH=git@github.com-plimanowka:plimanowka
+GH=git@github.com:plimanowka   # alias github.com-plimanowka podstawia insteadOf z ~/dev/plimanowka/.gitconfig
 
 for r in zamelduj plimanowka-home dotfiles eagle-ai claude-homeassistant wilkowisko-hub wilkowisko-siec pinandfix; do
   [ -d "$r" ] || git clone "$GH/$r.git" "$r"

@@ -3,13 +3,14 @@
 #   bash z-usb.sh /mnt/data/przeprowadzka-2026-11/mac-RRRRMMDD-HHMM.tar   (stare archiwa *.tar.age też)
 # Wymaga: tar (age tylko dla *.tar.age). Uruchom PRZED pierwszym `claude` (żeby nie powstały puste katalogi projektów).
 set -euo pipefail
-arch=${1:?Podaj plik .tar albo .tar.age}
+arch=${1:?Podaj katalog z na-usb.sh --rsync albo plik .tar / .tar.age}
 STARY=/Users/pawellimanowka
 cd "$HOME"
 # Rozpakowanie do poczekalni: sekrety repozytoriów (.env.local itp.) czekają tam, aż odtworz-repo.sh sklonuje repo
 # (git clone nie wejdzie do niepustego katalogu). Reszta od razu trafia na miejsce.
 POCZ="$HOME/.migracja-usb"; mkdir -p "$POCZ"
-if [[ $arch == *.age ]]; then age -d "$arch" | tar -xf - -C "$POCZ"; else tar -xf "$arch" -C "$POCZ"; fi
+if [ -d "$arch" ]; then rsync -a "$arch"/ "$POCZ"/   # katalog z na-usb.sh --rsync
+elif [[ $arch == *.age ]]; then age -d "$arch" | tar -xf - -C "$POCZ"; else tar -xf "$arch" -C "$POCZ"; fi
 for p in .claude .claude-zamelduj .claude-plimanowka .ssh .gitconfig .config .aws dev/tasks dev/tmp dev/wachata-media dev/presentations \
          dev/plimanowka/experiments dev/plimanowka/vms; do
   [ -e "$POCZ/$p" ] || continue
@@ -47,5 +48,7 @@ grep -rl "$STARY" .claude/settings.json .claude/settings.local.json .claude/sche
 
 # 3) Uprawnienia sekretów
 chmod 700 .ssh && chmod 600 .ssh/* 2>/dev/null; chmod 644 .ssh/*.pub .ssh/known_hosts 2>/dev/null || true
+# ~/.ssh/config z Maca ma `UseKeychain yes` — OpenSSH na Linuksie odrzuca nieznaną opcję i ssh nie działa wcale
+grep -qi "^IgnoreUnknown" .ssh/config 2>/dev/null || sed -i "1i IgnoreUnknown UseKeychain" .ssh/config
 chmod 600 .config/sops/age/keys.txt 2>/dev/null || true
 echo "Gotowe. Dalej: odtworz-repo.sh, potem logowanie w Claude Desktop (/login w CLI)."
