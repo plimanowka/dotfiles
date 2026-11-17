@@ -11,7 +11,7 @@ cd "$HOME"
 POCZ="$HOME/.migracja-usb"; mkdir -p "$POCZ"
 if [ -d "$arch" ]; then rsync -a "$arch"/ "$POCZ"/   # katalog z na-usb.sh --rsync
 elif [[ $arch == *.age ]]; then age -d "$arch" | tar -xf - -C "$POCZ"; else tar -xf "$arch" -C "$POCZ"; fi
-for p in .claude .claude-zamelduj .claude-plimanowka .ssh .gitconfig .config .aws dev/tasks dev/tmp dev/wachata-media dev/presentations \
+for p in .claude .claude-zamelduj .claude-plimanowka .local/share/claude-skrzynka .ssh .gitconfig .config .aws dev/tasks dev/tmp dev/wachata-media dev/presentations \
          dev/plimanowka/experiments dev/plimanowka/vms; do
   [ -e "$POCZ/$p" ] || continue
   mkdir -p "$(dirname "$p")"; cp -a "$POCZ/$p" "$(dirname "$p")/" && rm -rf "${POCZ:?}/$p"
@@ -44,7 +44,7 @@ done
 
 # 2) Ścieżki zapisane w ustawieniach i zadaniach cyklicznych
 # (grep zwraca 2, gdy któregoś pliku brak — z pipefail to przerywało skrypt przed krokiem 3, 17.11)
-{ grep -rl "$STARY" .claude/settings.json .claude/settings.local.json .claude/scheduled-tasks .claude/statusline-command.sh .claude-zamelduj/CLAUDE.md 2>/dev/null || true; } \
+{ grep -rl "$STARY" .claude/settings.json .claude/settings.local.json .claude/scheduled-tasks .claude/statusline-command.sh .claude-zamelduj/CLAUDE.md .claude-zamelduj/.claude.json .claude-plimanowka/.claude.json 2>/dev/null || true; } \
   | xargs -r sed -i "s#$STARY#$HOME#g"
 
 # 3) Uprawnienia sekretów

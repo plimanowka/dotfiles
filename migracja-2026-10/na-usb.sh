@@ -20,6 +20,8 @@ LISTA=(
   # konto zamelduj (CLAUDE_CONFIG_DIR=~/.claude-zamelduj, od 27.10): transkrypty sesji zamelduj, skille; reszta to
   # dowiązania do ~/.claude (z-usb.sh przestawia je na Linuksa). ~/.claude-loopme zostaje na Macu jak dev/loopme.
   .claude-zamelduj .claude-plimanowka
+  # skrzynka między sesjami: skrypt (hook UserPromptSubmit + serwer MCP) i baza SQLite — LOKALNA dla maszyny (17.11)
+  .local/share/claude-skrzynka
   # sekrety i dostępy
   # klucz age (na Macu w Library!) odszyfrowuje sejf dotfiles/secrets i secrets/ zamelduj — JEDYNA kopia
   "Library/Application Support/sops/age"
