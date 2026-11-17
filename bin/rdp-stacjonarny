@@ -27,18 +27,23 @@ set -euo pipefail
 HOST="${RDP_HOST:-stacjonarny.local}"
 USER_NAME="${RDP_USER:-pawel}"
 
-# --app: build ~/Applications/RDP Stacjonarny.app (Spotlight, Launchpad, Dock) that runs this script.
+# --app [name host]: build ~/Applications/<name>.app (Spotlight, Launchpad, Dock) that runs this script.
+#   rdp-stacjonarny --app                          "RDP Stacjonarny", home network (stacjonarny.local)
+#   rdp-stacjonarny --app rdp-ts <tailscale-ip>    same box from anywhere over Tailscale (host kept in the app only)
 if [[ "${1:-}" == "--app" ]]; then
     self="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
-    app="$HOME/Applications/RDP Stacjonarny.app"
+    name="${2:-RDP Stacjonarny}"
+    host_env=""; [[ -n "${3:-}" ]] && host_env="RDP_HOST=$3 "
+    app="$HOME/Applications/$name.app"
     mkdir -p "$HOME/Applications"
     rm -rf "$app"
     # `do shell script` gets a bare PATH; add Homebrew so sdl-freerdp is found.
-    osacompile -o "$app" -e "do shell script \"export PATH=/opt/homebrew/bin:/usr/local/bin:\$PATH; '$self' >/dev/null 2>&1\""
+    osacompile -o "$app" -e "do shell script \"export PATH=/opt/homebrew/bin:/usr/local/bin:\$PATH; $host_env'$self' >/dev/null 2>&1\""
     # macOS Local Network privacy: FreeRDP started from this app is attributed to the app, and
     # without a usage string macOS silently blocks LAN connects (terminal launches work).
     plutil -insert NSLocalNetworkUsageDescription -string "Połączenie zdalnego pulpitu z komputerem w sieci domowej." "$app/Contents/Info.plist"
-    plutil -replace CFBundleIdentifier -string "pl.plimanowka.rdp-stacjonarny" "$app/Contents/Info.plist"
+    bundle_id="pl.plimanowka.rdp-stacjonarny"; [[ -n "${3:-}" ]] && bundle_id="$bundle_id.$(printf '%s' "$name" | tr -cd 'a-zA-Z0-9-')"
+    plutil -replace CFBundleIdentifier -string "$bundle_id" "$app/Contents/Info.plist"
     codesign --force --sign - "$app" 2>/dev/null
     echo "gotowe: $app"
     exit 0
