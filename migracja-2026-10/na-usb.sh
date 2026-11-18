@@ -51,7 +51,7 @@ fi
 if [ "${1:-}" = "--rsync" ]; then
   cel=${2:?Podaj host:katalog}
   ssh "${cel%%:*}" "mkdir -p '${cel#*:}'"
-  rsync -aR --delete --exclude='.claude/projects/-Users-pawellimanowka-dev-loopme*' --exclude='.claude-zamelduj/projects/-Users-pawellimanowka-dev-loopme*' \
+  rsync -aR --delete --rsync-path='nice -n 19 ionice -c3 rsync' --exclude='.claude/projects/-Users-pawellimanowka-dev-loopme*' --exclude='.claude-zamelduj/projects/-Users-pawellimanowka-dev-loopme*' \
     --exclude='.claude-plimanowka/projects/-Users-pawellimanowka-dev-loopme*' --exclude='.DS_Store' --exclude='__pycache__' --exclude='.ssh/id_ed25519_loopme*' \
     "${istnieje[@]}" "$cel/"
   echo "Gotowe: $cel (na boksie: bash z-usb.sh ${cel#*:})"; exit 0
