@@ -25,7 +25,7 @@ LISTA=(
   # sekrety i dostępy
   # klucz age (na Macu w Library!) odszyfrowuje sejf dotfiles/secrets i secrets/ zamelduj — JEDYNA kopia
   "Library/Application Support/sops/age"
-  .ssh .gitconfig .config/rclone .config/zamelduj .config/plimanowka-ads .config/pinandfix .config/stripe .aws .config/gh
+  .ssh .gitconfig .config/rclone .config/zamelduj .config/plimanowka-ads .config/pinandfix .config/stripe .config/git .aws .config/gh
   # notatki i robocze
   dev/tasks dev/tmp dev/wachata-media dev/presentations
   # katalogi bez gita w ~/dev/plimanowka
