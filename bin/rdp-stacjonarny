@@ -12,8 +12,10 @@
 # Option word moves come from the FreeRDP-only Karabiner rule (macos/karabiner.json), because macOS
 # keeps Ctrl+arrows for its own Spaces.
 # Window, not full screen: +dynamic-resolution makes it resizable/maximizable and re-sends the
-# resolution on resize and when the window moves to another display; the scale follows that
-# display (Retina 200 %, plain monitor 100 %) because no /scale-desktop override is given.
+# resolution on resize. The desktop scale is taken ONCE, from the display the window opens on
+# (Retina/HiDPI 200 %); GNOME keeps it when the window is dragged to a plain monitor, which then
+# shows everything twice too big. RDP_SCALE=<percent> forces it (/scale-desktop), e.g. 100 for a
+# non-HiDPI monitor; the "RDP Stacjonarny 100%" app sets it. Takes effect on (re)connect.
 # FreeRDP hotkeys use RIGHT Shift: RShift+Enter full screen on/off, RShift+R resizable,
 # RShift+G release keyboard grab, RShift+D disconnect, RShift+M minimize.
 #
@@ -30,10 +32,12 @@ USER_NAME="${RDP_USER:-pawel}"
 # --app [name host]: build ~/Applications/<name>.app (Spotlight, Launchpad, Dock) that runs this script.
 #   rdp-stacjonarny --app                          "RDP Stacjonarny", home network (stacjonarny.local)
 #   rdp-stacjonarny --app rdp-ts <tailscale-ip>    same box from anywhere over Tailscale (host kept in the app only)
+#   rdp-stacjonarny --app "RDP Stacjonarny 100%" "" 100   forced 100 % scale (plain monitor at work); "" = default host
 if [[ "${1:-}" == "--app" ]]; then
     self="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
     name="${2:-RDP Stacjonarny}"
     host_env=""; [[ -n "${3:-}" ]] && host_env="RDP_HOST=$3 "
+    [[ -n "${4:-}" ]] && host_env="${host_env}RDP_SCALE=$4 "
     app="$HOME/Applications/$name.app"
     mkdir -p "$HOME/Applications"
     rm -rf "$app"
@@ -42,7 +46,7 @@ if [[ "${1:-}" == "--app" ]]; then
     # macOS Local Network privacy: FreeRDP started from this app is attributed to the app, and
     # without a usage string macOS silently blocks LAN connects (terminal launches work).
     plutil -insert NSLocalNetworkUsageDescription -string "Połączenie zdalnego pulpitu z komputerem w sieci domowej." "$app/Contents/Info.plist"
-    bundle_id="pl.plimanowka.rdp-stacjonarny"; [[ -n "${3:-}" ]] && bundle_id="$bundle_id.$(printf '%s' "$name" | tr -cd 'a-zA-Z0-9-')"
+    bundle_id="pl.plimanowka.rdp-stacjonarny"; [[ -n "${3:-}${4:-}" ]] && bundle_id="$bundle_id.$(printf '%s' "$name" | tr -cd 'a-zA-Z0-9-')"
     plutil -replace CFBundleIdentifier -string "$bundle_id" "$app/Contents/Info.plist"
     codesign --force --sign - "$app" 2>/dev/null
     echo "gotowe: $app"
@@ -59,6 +63,7 @@ echo "=== $(date '+%F %T') start ($how) host=$HOST addr=$ADDR python3=$(command 
 
 args=(/v:"$ADDR" /u:"$USER_NAME" /cert:tofu +dynamic-resolution /size:90% /gfx:AVC444 +clipboard /sound
       /kbd:remap:347=29)
+[[ -n "${RDP_SCALE:-}" ]] && args+=(/scale-desktop:"$RDP_SCALE")
 # RDP scancodes in decimal: 347=LWin 29=LCtrl (sdl-freerdp /list:kbd-scancode).
 # FreeRDP 3 rejects remap entries longer than 10 chars (cmdline.c check_kbd_remap_valid), so no 0x015b=0x001d.
 
